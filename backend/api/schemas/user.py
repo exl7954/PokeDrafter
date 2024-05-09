@@ -3,7 +3,7 @@ Schemas for user related operations.
 '''
 from datetime import datetime
 from typing import Annotated, List, Optional
-from pydantic import BaseModel, BeforeValidator, EmailStr, Field
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field, ConfigDict
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
@@ -36,5 +36,14 @@ class UserUpdate(BaseModel):
     '''
     Schema for updating a user.
     '''
-    username: Optional[str] = Field(None, min_length=3, max_length=20)
     email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "jdoe@example.com",
+                "password": "password123"
+            }
+        }
+    )

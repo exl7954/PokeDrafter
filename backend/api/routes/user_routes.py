@@ -4,8 +4,8 @@ Define routes for user related operations.
 import bcrypt
 from fastapi import APIRouter, Body, HTTPException, status, Depends
 from bson import ObjectId
-from backend.models.user import UserModel, UserCollection, UpdateUserModel
-from backend.api.schemas.user import UserCreate, UserReadCollection, UserRead
+from backend.models.user import UserModel
+from backend.api.schemas.user import UserCreate, UserReadCollection, UserRead, UserUpdate
 from backend.db.mongo import pokedrafter_db
 from backend.api.auth import get_current_user
 
@@ -80,6 +80,39 @@ def get_self(user: UserModel = Depends(get_current_user)):
     '''
     return user
 
+##### UPDATE #####
+@router.put("/users/update",
+            tags=["users"],
+            response_description="Update a user.",
+            response_model=UserModel,
+            response_model_by_alias=False,
+)
+async def update_user(update_body: UserUpdate = Body(...),
+                      current_user: UserModel = Depends(get_current_user)):
+    '''
+    Update self email or password.
+    '''
+    db = pokedrafter_db
+
+    # Check for existing user
+    existing_user = await db.users.find_one({"_id": ObjectId(current_user.id)})
+    if not existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+    if update_body.password:
+        update_body.password = bcrypt.hashpw(update_body.password.encode("utf-8"),
+                                             bcrypt.gensalt()).decode("utf-8")
+    updated_user = await db.users.update_one({"_id": ObjectId(current_user.id)},
+                                    {"$set": update_body.model_dump(by_alias=True, exclude=["id"])})
+    if updated_user.modified_count:
+        return await db.users.find_one({"_id": ObjectId(current_user.id)})
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not updated.")
+
+##### READ USER BY ID #####
 @router.get("/users/{user_id}",
             tags=["users"],
             response_description="Get a specific user.",
@@ -96,33 +129,3 @@ async def get_user(user_id: str):
         return UserRead(**user)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
-
-
-
-##### UPDATE #####
-# @router.put("/users/update/{user_id}",
-#             tags=["users"],
-#             response_description="Update a user.",
-#             response_model=UserModel,
-#             response_model_by_alias=False,
-# )
-# async def update_user(user_id: str, user: UpdateUserModel = Body(...)):
-#     '''
-#     Update a user.
-#     '''
-#     db = pokedrafter_db
-
-#     # Check for existing user
-#     existing_user = await db.users.find_one({"_id": user_id})
-#     if not existing_user:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="User not found."
-#         )
-
-#     user.password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-#     updated_user = await db.users.update_one({"_id": user_id}, {"$set": user.model_dump(by_alias=True, exclude=["id"])})
-#     if updated_user.modified_count:
-#         return await db.users.find_one({"_id": user_id})
-
-#     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not updated.")

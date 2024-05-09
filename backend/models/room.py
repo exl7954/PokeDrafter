@@ -1,7 +1,7 @@
 '''
 Define the Room model and supporting models for the Room model.
 '''
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods, duplicate-code
 from datetime import datetime
 from typing import List, Optional, Annotated
 from pydantic import BaseModel, BeforeValidator, Field, ConfigDict

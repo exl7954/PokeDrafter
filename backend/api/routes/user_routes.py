@@ -83,7 +83,7 @@ def get_self(user: UserModel = Depends(get_current_user)):
 ##### UPDATE #####
 @router.put("/users/update",
             tags=["users"],
-            response_description="Update a user.",
+            response_description="Update current logged in user.",
             response_model=UserModel,
             response_model_by_alias=False,
 )
@@ -111,6 +111,23 @@ async def update_user(update_body: UserUpdate = Body(...),
         return await db.users.find_one({"_id": ObjectId(current_user.id)})
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not updated.")
+
+##### DELETE #####
+@router.delete("/users/delete",
+               tags=["users"],
+               response_description="Delete current logged in user.",
+               status_code=status.HTTP_200_OK,
+)
+async def delete_user(current_user: UserModel = Depends(get_current_user)):
+    '''
+    Delete self.
+    '''
+    db = pokedrafter_db
+    deleted_user = await db.users.delete_one({"_id": ObjectId(current_user.id)})
+    if deleted_user.deleted_count:
+        return {"message": "User deleted."}
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not deleted.")
 
 ##### READ USER BY ID #####
 @router.get("/users/{user_id}",

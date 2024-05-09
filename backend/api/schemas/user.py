@@ -26,6 +26,12 @@ class UserRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+class UserReadCollection(BaseModel):
+    '''
+    Schema for reading multiple users.
+    '''
+    users: List[UserRead]
+
 class UserUpdate(BaseModel):
     '''
     Schema for updating a user.

@@ -2,10 +2,12 @@
 Define routes for user related operations.
 '''
 import bcrypt
-from fastapi import APIRouter, Body, HTTPException, status
+from fastapi import APIRouter, Body, HTTPException, status, Depends
+from bson import ObjectId
 from backend.models.user import UserModel, UserCollection, UpdateUserModel
-from backend.api.schemas.user import UserCreate
+from backend.api.schemas.user import UserCreate, UserReadCollection, UserRead
 from backend.db.mongo import pokedrafter_db
+from backend.api.auth import get_current_user
 
 router = APIRouter()
 
@@ -25,12 +27,23 @@ async def create_user(user: UserCreate = Body(...)):
     db = pokedrafter_db
 
     # Check for existing user
-    existing_user = await db.users.find_one({"username": user.username})
+    existing_user = await db.users.find_one({
+        "$or": [
+            {"username": user.username},
+            {"email": user.email}
+        ]
+    })
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken."
-        )
+        if existing_user["username"] == user.username:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken."
+            )
+        if existing_user["email"] == user.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use."
+            )
 
     user.password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
     user_model = UserModel(**user.model_dump())
@@ -45,7 +58,7 @@ async def create_user(user: UserCreate = Body(...)):
 @router.get("/users/",
             tags=["users"],
             response_description="Get all users.",
-            response_model=UserCollection,
+            response_model=UserReadCollection,
             response_model_by_alias=False,
 )
 async def get_users():
@@ -53,12 +66,24 @@ async def get_users():
     Get all users.
     '''
     db = pokedrafter_db
-    return UserCollection(users=await db.users.find().to_list(None))
+    return UserReadCollection(users=await db.users.find().to_list(None))
+
+@router.get("/users/me",
+            tags=["users"],
+            response_description="Get the current user.",
+            response_model=UserModel,
+            response_model_by_alias=False,
+            )
+def get_self(user: UserModel = Depends(get_current_user)):
+    '''
+    Get the current user.
+    '''
+    return user
 
 @router.get("/users/{user_id}",
             tags=["users"],
             response_description="Get a specific user.",
-            response_model=UserModel,
+            response_model=UserRead,
             response_model_by_alias=False,
 )
 async def get_user(user_id: str):
@@ -66,11 +91,13 @@ async def get_user(user_id: str):
     Get a specific user.
     '''
     db = pokedrafter_db
-    user = await db.users.find_one({"_id": user_id})
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
     if user:
-        return user
+        return UserRead(**user)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+
 
 ##### UPDATE #####
 # @router.put("/users/update/{user_id}",

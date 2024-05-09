@@ -68,6 +68,23 @@ async def get_users():
     db = pokedrafter_db
     return UserReadCollection(users=await db.users.find().to_list(None))
 
+@router.get("/users/id/{user_id}",
+            tags=["users"],
+            response_description="Get a specific user.",
+            response_model=UserRead,
+            response_model_by_alias=False,
+)
+async def get_user(user_id: str):
+    '''
+    Get a specific user.
+    '''
+    db = pokedrafter_db
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if user:
+        return UserRead(**user)
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
 @router.get("/users/me",
             tags=["users"],
             response_description="Get the current user.",
@@ -101,12 +118,15 @@ async def update_user(update_body: UserUpdate = Body(...),
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found."
         )
+    update_body = {
+        k: v for k, v in update_body.model_dump(by_alias=True).items() if v is not None
+    }
 
     if update_body.password:
         update_body.password = bcrypt.hashpw(update_body.password.encode("utf-8"),
                                              bcrypt.gensalt()).decode("utf-8")
     updated_user = await db.users.update_one({"_id": ObjectId(current_user.id)},
-                                    {"$set": update_body.model_dump(by_alias=True, exclude=["id"])})
+                                    {"$set": update_body})
     if updated_user.modified_count:
         return await db.users.find_one({"_id": ObjectId(current_user.id)})
 
@@ -128,21 +148,3 @@ async def delete_user(current_user: UserModel = Depends(get_current_user)):
         return {"message": "User deleted."}
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not deleted.")
-
-##### READ USER BY ID #####
-@router.get("/users/{user_id}",
-            tags=["users"],
-            response_description="Get a specific user.",
-            response_model=UserRead,
-            response_model_by_alias=False,
-)
-async def get_user(user_id: str):
-    '''
-    Get a specific user.
-    '''
-    db = pokedrafter_db
-    user = await db.users.find_one({"_id": ObjectId(user_id)})
-    if user:
-        return UserRead(**user)
-
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")

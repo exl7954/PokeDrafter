@@ -17,7 +17,7 @@ class RoomModel(BaseModel):
     description: Optional[str] = None
     participants: List[PyObjectId] = []
     moderators: List[PyObjectId] = []
-    creator: PyObjectId
+    creator: PyObjectId= None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 

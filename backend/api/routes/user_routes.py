@@ -145,6 +145,6 @@ async def delete_user(current_user: UserModel = Depends(get_current_user)):
     db = pokedrafter_db
     deleted_user = await db.users.delete_one({"_id": ObjectId(current_user.id)})
     if deleted_user.deleted_count:
-        return {"message": "User deleted."}
+        return {"message": "User deleted.", "user_id": current_user.id}
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not deleted.")

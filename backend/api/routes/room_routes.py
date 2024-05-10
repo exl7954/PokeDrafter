@@ -302,8 +302,6 @@ async def update_room_moderators(room_id: str,
             update_model = {
                 k: v for k, v in update_model.model_dump(by_alias=True).items() if v is not None
             }
-            print("here")
-            print(update_model)
             await db.rooms.update_one({"_id": ObjectId(room_id)},
                                       {"$set": update_model})
             updated_room = await db.rooms.find_one({"_id": ObjectId(room_id)})
@@ -311,6 +309,29 @@ async def update_room_moderators(room_id: str,
 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Not authorized to change moderators for this room.")
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Room not found.")
+
+##### DELETE #####
+@router.delete("/rooms/delete/{room_id}",
+               tags=["rooms"],
+               response_description="Delete a room.",
+               status_code=status.HTTP_200_OK,
+)
+async def delete_room(room_id: str, current_user: UserModel = Depends(get_current_user)):
+    '''
+    Delete a room.
+    '''
+    db = pokedrafter_db
+    room = await db.rooms.find_one({"_id": ObjectId(room_id)})
+    if room:
+        if current_user.id == room["creator"]:
+            await db.rooms.delete_one({"_id": ObjectId(room_id)})
+            return {"message": "Room deleted.", "room_id": room_id}
+
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to delete this room.")
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")

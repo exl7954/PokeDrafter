@@ -1,7 +1,6 @@
 '''
 Schemas for room related operations.
 '''
-from datetime import datetime
 from typing import Annotated, List, Optional
 from pydantic import BaseModel, BeforeValidator, Field, ConfigDict
 from backend.models.room import RoomInvitePolicy

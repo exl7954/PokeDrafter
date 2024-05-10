@@ -8,7 +8,7 @@ from backend.api.auth import get_current_user
 from backend.db.mongo import pokedrafter_db
 from backend.models.room import RoomModel
 from backend.models.user import UserModel
-from backend.models.draft import DraftModel, DraftCollection
+from backend.models.draft import DraftModel, DraftCollection, UpdateDraftModel
 from backend.api.schemas.draft import DraftCreate, DraftUpdateSchema, DraftPickSchema, DraftTemplateCreate
 
 router = APIRouter()
@@ -78,6 +78,7 @@ async def websocket_endpoint(websocket: WebSocket,
     except WebSocketDisconnect:
         await manager.disconnect(websocket, room_id)
 
+##### CREATE #####
 @router.post("/draft/{room_id}/create",
              tags=["draft"],
              response_description="Create a draft.",
@@ -112,6 +113,7 @@ async def create_draft(room_id: str,
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft not created.")
 
+##### READ #####
 @router.get("/draft",
             tags=["draft"],
             response_description="Get all drafts.",
@@ -141,3 +143,40 @@ async def get_draft(draft_id: str):
         return DraftModel(**draft)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Draft not found.")
+
+##### UPDATE #####
+@router.put("/draft/{draft_id}/update",
+            tags=["draft"],
+            response_description="Update a draft. Not for updating picks",
+            response_model=DraftModel,
+            response_model_by_alias=False,
+)
+async def update_draft(draft_id: str,
+                       update_body: DraftUpdateSchema,
+                       current_user: UserModel = Depends(get_current_user)):
+    '''
+    Update a draft. Not for updating picks.
+    '''
+    db = pokedrafter_db
+    draft = await db.drafts.find_one({"_id": ObjectId(draft_id)})
+    room = await db.rooms.find_one({"_id": ObjectId(draft["room"])})
+
+    if not draft:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Draft not found.")
+    if current_user.id not in room["moderators"] and room["creator"] != current_user.id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Unauthorized.")
+
+    update_model = UpdateDraftModel(**update_body.model_dump())
+    update_model = {
+        k: v for k, v in update_model.model_dump(by_alias=True).items() if v is not None
+    }
+
+    updated_draft = await db.drafts.update_one({"_id": ObjectId(draft_id)},
+                                               {"$set": update_model})
+    if updated_draft:
+        new_draft = await db.drafts.find_one({"_id": ObjectId(draft_id)})
+        return DraftModel(**new_draft)
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft not updated.")

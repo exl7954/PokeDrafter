@@ -10,7 +10,7 @@ PyObjectId = Annotated[str, BeforeValidator(str)]
 
 class DraftTemplateCreate(BaseModel):
     '''
-    Schema for creating a draft.
+    Schema for creating a draft template.
     '''
     name: str = Field(..., min_length=3, max_length=50)
     description: Optional[str] = None
@@ -30,10 +30,9 @@ class DraftTemplateCreate(BaseModel):
 
 class DraftCreate(DraftTemplateCreate):
     '''
-    Schema for creating a draft with picks.
+    Schema for starting a draft in a room.
     '''
-    picks: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
-    pick_order: List[PyObjectId] = Field(default_factory=list)
+    room: PyObjectId
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -67,6 +66,8 @@ class DraftPickSchema(BaseModel):
     Schema for updating picks in a draft.
     '''
     picks: Dict[PyObjectId, List[str]]
+    pick_order: Optional[List[PyObjectId]] = None
+    current_pick: Optional[PyObjectId] = None
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

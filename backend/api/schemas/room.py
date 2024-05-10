@@ -25,6 +25,7 @@ class RoomUpdateMeta(BaseModel):
     room_status: Optional[RoomStatus] = None
     max_participants: Optional[int] = Field(None, ge=4, le=20)
     invite_policy: Optional[RoomInvitePolicy] = None
+    draft: Optional[PyObjectId] = None
 
 class RoomUpdateParticipants(BaseModel):
     '''

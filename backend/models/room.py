@@ -43,6 +43,8 @@ class RoomModel(BaseModel):
     incoming_requests: List[PyObjectId] = Field(default_factory=list)
     invite_policy: RoomInvitePolicy = RoomInvitePolicy.OPEN
 
+    draft: Optional[PyObjectId] = None
+
     moderators: List[PyObjectId] = []
     creator: PyObjectId= None
     created_at: datetime = Field(default_factory=datetime.now)
@@ -66,6 +68,8 @@ class UpdateRoomModel(BaseModel):
     outgoing_invites: Optional[List[PyObjectId]] = None
     incoming_requests: Optional[List[PyObjectId]] = None
     invite_policy: Optional[RoomInvitePolicy] = None
+
+    draft: Optional[PyObjectId] = None
 
     moderators: Optional[List[PyObjectId]] = None
 

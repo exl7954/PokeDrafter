@@ -15,7 +15,7 @@ class DraftTemplate(BaseModel):
     id: Optional[PyObjectId] = Field(default=None, alias='_id')
     name: str = Field(..., min_length=3, max_length=50)
     description: Optional[str] = None
-    creator: PyObjectId
+    creator: PyObjectId = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -36,8 +36,10 @@ class DraftModel(DraftTemplate):
     '''
     Container for a draft with picks.
     '''
+    room: PyObjectId = None
     picks: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
     pick_order: List[PyObjectId] = Field(default_factory=list)
+    current_pick: Optional[PyObjectId] = None
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

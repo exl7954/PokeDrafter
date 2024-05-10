@@ -23,6 +23,7 @@ class RoomStatus(str, Enum):
     '''
     RECRUITING = 'recruiting'
     DRAFTING = 'drafting'
+    FREEAGENT = 'freeagent'
     INPROGRESS = 'inprogress'
     COMPLETED = 'completed'
 

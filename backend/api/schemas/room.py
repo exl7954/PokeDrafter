@@ -3,7 +3,7 @@ Schemas for room related operations.
 '''
 from typing import Annotated, List, Optional
 from pydantic import BaseModel, BeforeValidator, Field, ConfigDict
-from backend.models.room import RoomInvitePolicy
+from backend.models.room import RoomInvitePolicy, RoomStatus
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
@@ -22,6 +22,7 @@ class RoomUpdateMeta(BaseModel):
     '''
     name: Optional[str] = Field(None, min_length=3, max_length=50)
     description: Optional[str] = None
+    room_status: Optional[RoomStatus] = None
     max_participants: Optional[int] = Field(None, ge=4, le=20)
     invite_policy: Optional[RoomInvitePolicy] = None
 

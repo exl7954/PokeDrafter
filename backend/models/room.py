@@ -17,6 +17,15 @@ class RoomInvitePolicy(str, Enum):
     INVITE_ONLY = 'invite_only'
     APPROVAL_REQUIRED = 'approval_required'
 
+class RoomStatus(str, Enum):
+    '''
+    Enum for room status.
+    '''
+    RECRUITING = 'recruiting'
+    DRAFTING = 'drafting'
+    INPROGRESS = 'inprogress'
+    COMPLETED = 'completed'
+
 class RoomModel(BaseModel):
     '''
     Container for a single room.
@@ -24,6 +33,7 @@ class RoomModel(BaseModel):
     id: Optional[PyObjectId] = Field(default=None, alias='_id')
     name: str = Field(..., min_length=3, max_length=50)
     description: Optional[str] = None
+    room_status: RoomStatus = RoomStatus.RECRUITING
 
     max_participants: int = Field(12, ge=4, le=20)
     participants: List[PyObjectId] = Field(default_factory=list)

@@ -263,6 +263,12 @@ async def remove_participant(room_id: str,
         if not all(participant in room["participants"] for participant in participants.participants):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail="One or more participants not found in room.")
+        # cannot remove creator is user is not creator
+        if current_user.id != room["creator"]:
+            if room["creator"] in participants.participants:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                    detail="Not authorized to remove creator from room.")
+
         if current_user.id in room["moderators"]:
             await db.rooms.update_one({"_id": ObjectId(room_id)},
                                       {"$pull": {"participants": {"$in": [ObjectId(participant) for participant in participants.participants]}}})

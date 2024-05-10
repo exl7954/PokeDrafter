@@ -111,56 +111,77 @@ async def update_room_meta(room_id: str,
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found.")
 
-@router.put("/rooms/update/{room_id}/participants",
+@router.put("/rooms/update/{room_id}/participants/join",
             tags=["rooms"],
-            response_description="Update room participants.",
+            response_description="Join room if allowed.",
             response_model=RoomModel,
             response_model_by_alias=False
 )
-async def update_room_participants(room_id: str,
-                                   update_body: RoomUpdateParticipants = Body(...),
-                                   current_user: UserModel = Depends(get_current_user)):
+async def join_room(room_id: str, current_user: UserModel = Depends(get_current_user)):
     '''
-    Update room participants.
-    If room is open, replaces existing participants with supplied participants.
-    If room is invite only, participants will be added to outgoing invites.
-    If room is approval required, participants will be added to incoming requests.
+    Join a room if not full.
+    If room invite policy is open, user will be added to participants.
+    If room invite policy is approval, user will be added to incoming requests.
     '''
     db = pokedrafter_db
 
     room = await db.rooms.find_one({"_id": ObjectId(room_id)})
     if room:
-        if current_user.id in room["moderators"]:
-            # check if users exist
-            users = await db.users.find({"_id": {"$in": [ObjectId(participant) for participant in update_body.participants]}}).to_list(None)
-            if len(users) != len(update_body.participants):
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                    detail="One or more users not found.")
+        if current_user.id in room["participants"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="User already in room.")
 
-            # ensure length is within max_participants if room open
-            if len(update_body.participants) > room["max_participants"] and room["invite_policy"] == "open":
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="Too many participants.")
+        if len(room["participants"]) >= room["max_participants"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Room is full.")
 
-            # change body based on invite policy
-            if room["invite_policy"] == "open":
-                update_model = UpdateRoomModel(participants=update_body.participants)
-            elif room["invite_policy"] == "invite_only":
-                update_model = UpdateRoomModel(outgoing_invites=[id for id in update_body.participants if id not in room["participants"]])
-            elif room["invite_policy"] == "approval_required":
-                update_model = UpdateRoomModel(incoming_requests=[id for id in update_body.participants if id not in room["participants"]])
-
-            # drop empty fields
-            update_model = {
-                k: v for k, v in update_model.model_dump(by_alias=True).items() if v is not None
-            }
+        if room["invite_policy"] == "open":
             await db.rooms.update_one({"_id": ObjectId(room_id)},
-                                      {"$set": update_model})
+                                      {"$push": {"participants": current_user.id}})
+        elif room["invite_policy"] == "approval_required":
+            await db.rooms.update_one({"_id": ObjectId(room_id)},
+                                      {"$push": {"incoming_requests": current_user.id}})
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Room requires invite to join.")
+
+        updated_room = await db.rooms.find_one({"_id": ObjectId(room_id)})
+        return RoomModel(**updated_room)
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Room not found.")
+
+@router.put("/rooms/update/{room_id}/participants/invite",
+            tags=["rooms"],
+            response_description="Invite user to room.",
+            response_model=RoomModel,
+            response_model_by_alias=False
+)
+async def invite_to_room(room_id: str, invitee_id: str, current_user: UserModel = Depends(get_current_user)):
+    '''
+    Invite user to room.
+    Returns error if room is not invite only.
+    '''
+    db = pokedrafter_db
+
+    room = await db.rooms.find_one({"_id": ObjectId(room_id)})
+    if room:
+        if current_user.id not in room["moderators"] and current_user.id != room["creator"]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Not authorized to invite to this room.")
+
+        if invitee_id in room["participants"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="User already in room.")
+
+        if room["invite_policy"] == "invite_only":
+            await db.rooms.update_one({"_id": ObjectId(room_id)},
+                                      {"$push": {"outgoing_invites": invitee_id}})
             updated_room = await db.rooms.find_one({"_id": ObjectId(room_id)})
             return RoomModel(**updated_room)
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="Not authorized to change participants for this room.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Room does not allow invites.")
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")

@@ -8,6 +8,10 @@ on:
     paths:
       - "backend/**"
 
+env:
+    AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+    MONGO_URI: "mongodb://localhost:27017"
+
 jobs:
   pytest-backend:
     runs-on: ubuntu-latest

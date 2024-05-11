@@ -43,22 +43,18 @@ jobs:
       - name: Generate Coverage Report
         working-directory: ./backend
         run: coverage xml
-
-      - name: Generate coverage badge
-        run: |
-          genbadge coverage -i coverage.xml -o coverage-badge.svg
-        
-      - name: Upload coverage badge
+  
+      - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
-            name: coverage-badge
-            path: coverage-badge.svg
+            name: coverage
+            path: coverage.xml
 
-      - name: Commit coverage badge
+      - name: Commit Coverage Report
         if: github.event_name == 'push'
         run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git add coverage-badge.svg
-          git commit -m "Auto update coverage badge"
+          git add coverage.xml
+          git commit -m "Auto update coverage report"
           git push

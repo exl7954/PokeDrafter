@@ -122,6 +122,15 @@ async def update_user(update_body: UserUpdate = Body(...),
         k: v for k, v in update_body.model_dump(by_alias=True).items() if v is not None
     }
 
+    # Raise error if email is already in use
+    if "email" in update_body:
+        existing_email = await db.users.find_one({"email": update_body["email"]})
+        if existing_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use."
+            )
+
     if "password" in update_body:
         update_body["password"] = bcrypt.hashpw(update_body["password"].encode("utf-8"),
                                              bcrypt.gensalt()).decode("utf-8")

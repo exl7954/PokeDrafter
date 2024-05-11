@@ -2,6 +2,7 @@
 Unit tests for the user functionalities.
 '''
 import pytest
+from backend.db.mongo import pokedrafter_db
 
 user_dict = {}
 token_dict = {}
@@ -87,6 +88,25 @@ async def test_update_user(client):
                                 json={"email": "pytest2@pytest.com", "password": "newpassword"})
     assert response.status_code == 200
     assert response.json()["email"] == "pytest2@pytest.com"
+
+@pytest.mark.anyio
+async def test_update_bad_email(client):
+    '''
+    Test updating a user with an already existing email.
+    '''
+    await client.post("/users/create", json={
+        "username": "pytestemaildupe",
+        "email": "pytestdupe@pytest.com",
+        "password": "testpassword"
+    })
+    response = await client.put("/users/update",
+                                headers={"Authorization": f"Bearer {token_dict['pytestuser']}"},
+                                json={"email": "pytestdupe@pytest.com"})
+
+    await pokedrafter_db.users.delete_one({"username": "pytestemaildupe"})
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Email already in use."
 
 @pytest.mark.anyio
 async def test_login_after_pw_change(client):

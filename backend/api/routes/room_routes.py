@@ -45,7 +45,7 @@ async def create_room(room: RoomCreate = Body(...), current_user: dict = Depends
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Room not created.")
 
 ##### READ #####
-@router.get("/rooms/",
+@router.get("/rooms",
             tags=["rooms"],
             response_description="Get all rooms.",
             response_model=RoomCollection,

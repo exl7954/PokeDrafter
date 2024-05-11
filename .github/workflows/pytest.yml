@@ -14,6 +14,9 @@ env:
 
 jobs:
   pytest-backend:
+    permissions:
+        contents: write
+
     runs-on: ubuntu-latest
 
     steps:

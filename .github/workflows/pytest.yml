@@ -1,0 +1,38 @@
+name: Pytest Backend
+
+on:
+  push:
+    paths:
+      - "backend/**"
+  pull_request:
+    paths:
+      - "backend/**"
+
+jobs:
+  pytest-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+        
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.10.0
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          pip install pytest
+
+      - name: Test with Pytest
+        env:
+          MONGO_HOST: localhost
+        working-directory: ./backend
+        run: python -m pytest

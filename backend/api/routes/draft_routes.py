@@ -1,7 +1,7 @@
 '''
 Define WebSocket operations for drafting.
 '''
-#pylint: disable=line-too-long,too-many-arguments
+#pylint: disable=line-too-long,too-many-branches
 from typing import Dict, List
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, WebSocketException, HTTPException, status
 from bson import ObjectId

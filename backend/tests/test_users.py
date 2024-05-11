@@ -2,8 +2,6 @@
 Unit tests for the user functionalities.
 '''
 import pytest
-from fastapi.testclient import TestClient
-from backend.app import app
 
 user_dict = {}
 token_dict = {}
@@ -72,6 +70,7 @@ async def test_delete_user(client):
     '''
     Test deleting a user.
     '''
-    response = await client.delete("/users/delete", headers={"Authorization": f"Bearer {token_dict['pytestuser']}"})
+    response = await client.delete("/users/delete",
+                                   headers={"Authorization": f"Bearer {token_dict['pytestuser']}"})
     assert response.status_code == 200
     assert response.json()["message"] == "User deleted."

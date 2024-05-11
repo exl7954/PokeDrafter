@@ -21,6 +21,19 @@ async def test_create_user(client):
     assert response.json()["username"] == "pytestuser"
 
 @pytest.mark.anyio
+async def test_create_user_duplicate(client):
+    '''
+    Test creating a duplicate user.
+    '''
+    response = await client.post("/users/create", json={
+        "username": "pytestuser",
+        "email": "pytest@test.com",
+        "password": "badpassword"
+    })
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Username already taken."
+
+@pytest.mark.anyio
 async def test_login(client):
     '''
     Test logging in a user.

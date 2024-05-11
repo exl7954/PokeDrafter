@@ -1,0 +1,41 @@
+name: Generate Coverage Badge
+
+on:
+  workflow_run:
+    workflows: ["Pytest Backend"]
+    types:
+      - completed
+
+jobs:
+  generate-badge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install genbadge
+        run: pip install genbadge
+
+      - name: Generate Coverage Badge
+        run: genbadge coverage -i ./backend/coverage.xml -o ./backend/coverage-badge.svg
+
+      - name: Upload Coverage Badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: ./backend/coverage-badge.svg
+
+      - name: Commit Coverage Badge
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add ./backend/coverage-badge.svg
+          git commit -m "Auto update coverage badge"
+          git push

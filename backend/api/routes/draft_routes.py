@@ -9,7 +9,7 @@ from backend.api.auth import get_current_user
 from backend.db.mongo import pokedrafter_db
 from backend.models.user import UserModel
 from backend.models.draft import DraftModel, DraftCollection, UpdateDraftModel
-from backend.api.schemas.draft import DraftCreate, DraftUpdateSchema, DraftPickSchema, DraftTemplateCreate, DraftBoardUpdateSchema
+from backend.api.schemas.draft import DraftUpdateSchema, DraftPickSchema, DraftTemplateCreate, DraftBoardUpdateSchema
 
 router = APIRouter()
 

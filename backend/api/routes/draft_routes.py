@@ -1,7 +1,7 @@
 '''
 Define WebSocket operations for drafting.
 '''
-#pylint: disable=line-too-long
+#pylint: disable=line-too-long,too-many-arguments
 from typing import Dict, List
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, WebSocketException, HTTPException, status
 from bson import ObjectId
@@ -71,7 +71,6 @@ async def websocket_endpoint(websocket: WebSocket,
     await manager.connect(websocket, room_id)
 
     try:
-        # TODO: Implement draft operations
         while True:
             data = await websocket.receive_json()
             await websocket.send_json({"message": f"Message text was: {data}"})

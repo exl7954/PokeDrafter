@@ -34,9 +34,31 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           pip install pytest
+          pip install coverage
 
       - name: Test with Pytest
-        env:
-          MONGO_HOST: localhost
         working-directory: ./backend
-        run: python -m pytest
+        run: coverage run -m pytest
+
+      - name: Generate Coverage Report
+        working-directory: ./backend
+        run: coverage xml
+
+      - name: Generate coverage badge
+        run: |
+          genbadge coverage -i coverage.xml -o coverage-badge.svg
+        
+      - name: Upload coverage badge
+        uses: actions/upload-artifact@v4
+        with:
+            name: coverage-badge
+            path: coverage-badge.svg
+
+      - name: Commit coverage badge
+        if: github.event_name == 'push'
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add coverage-badge.svg
+          git commit -m "Auto update coverage badge"
+          git push

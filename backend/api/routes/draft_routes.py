@@ -64,7 +64,7 @@ async def websocket_endpoint(websocket: WebSocket,
     '''
     WebSocket endpoint for draft operations.
     '''
-    # if current_user is None:
+    # if current_user is None: 
     #     raise WebSocketException(code=status.HTTP_401_UNAUTHORIZED,
     #                              reason="Unauthorized")
 

@@ -21,11 +21,13 @@ class DraftTemplate(BaseModel):
 
     rules: List[str] = Field(default_factory=list)
     bans: List[str] = Field(default_factory=list)
+    point_limit: int = 115
+    pokemon_limit: int = 12
 
     tera_bans: List[str] = Field(default_factory=list)
     tera_captains: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
 
-    draft_board: List[List[str]] = Field(default_factory=list)
+    draft_board: Dict[int, List[str]] = Field(default_factory=list)
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -37,6 +39,7 @@ class DraftModel(DraftTemplate):
     Container for a draft with picks.
     '''
     room: PyObjectId = None
+    player_scores: Dict[PyObjectId, int] = Field(default_factory=dict)
     picks: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
     pick_order: List[PyObjectId] = Field(default_factory=list)
     current_pick: Optional[PyObjectId] = None

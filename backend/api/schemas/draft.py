@@ -17,6 +17,8 @@ class DraftTemplateCreate(BaseModel):
 
     rules: List[str] = Field(default_factory=list)
     bans: List[str] = Field(default_factory=list)
+    point_limit: int = 115
+    pokemon_limit: int = 12
 
     tera_bans: List[str] = Field(default_factory=list)
     tera_captains: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
@@ -48,9 +50,13 @@ class DraftUpdateSchema(BaseModel):
 
     rules: Optional[List[str]] = None
     bans: Optional[List[str]] = None
+    point_limit: Optional[int] = None
+    pokemon_limit: Optional[int] = None
 
     tera_bans: Optional[List[str]] = None
     tera_captains: Optional[Dict[PyObjectId, List[str]]] = None
+
+    draft_board: Optional[Dict[int, List[str]]] = None
 
     pick_order: Optional[List[PyObjectId]] = None
 
@@ -61,10 +67,18 @@ class DraftUpdateSchema(BaseModel):
         populate_by_name=True,
     )
 
+class DraftBoardUpdateSchema(BaseModel):
+    '''
+    Schema for updating a draft board.
+    '''
+    draft_board: Optional[Dict[int, List[str]]] = None
+
+
 class DraftPickSchema(BaseModel):
     '''
     Schema for updating picks in a draft.
     '''
+    player_scores: Dict[PyObjectId, int] = Field(default_factory=dict)
     picks: Dict[PyObjectId, List[str]]
     pick_order: Optional[List[PyObjectId]] = None
     current_pick: Optional[PyObjectId] = None

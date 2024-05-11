@@ -1,15 +1,15 @@
 '''
 Define WebSocket operations for drafting.
 '''
+#pylint: disable=line-too-long
 from typing import Dict, List
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, WebSocketException, HTTPException, status
 from bson import ObjectId
 from backend.api.auth import get_current_user
 from backend.db.mongo import pokedrafter_db
-from backend.models.room import RoomModel
 from backend.models.user import UserModel
 from backend.models.draft import DraftModel, DraftCollection, UpdateDraftModel
-from backend.api.schemas.draft import DraftCreate, DraftUpdateSchema, DraftPickSchema, DraftTemplateCreate
+from backend.api.schemas.draft import DraftCreate, DraftUpdateSchema, DraftPickSchema, DraftTemplateCreate, DraftBoardUpdateSchema
 
 router = APIRouter()
 
@@ -180,3 +180,106 @@ async def update_draft(draft_id: str,
         return DraftModel(**new_draft)
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft not updated.")
+
+@router.put("/draft/{draft_id}/update/board",
+            tags=["draft"],
+            response_description="Update a draft board.",
+            response_model=DraftModel,
+            response_model_by_alias=False,
+)
+async def update_draft_board(draft_id: str,
+                            update_body: DraftBoardUpdateSchema,
+                            current_user: UserModel = Depends(get_current_user)):
+    '''
+    Update a draft board.
+    '''
+    db = pokedrafter_db
+    draft = await db.drafts.find_one({"_id": ObjectId(draft_id)})
+    room = await db.rooms.find_one({"_id": ObjectId(draft["room"])})
+
+    if not draft:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Draft not found.")
+    if current_user.id not in room["moderators"] and room["creator"] != current_user.id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Unauthorized.")
+
+    update_model = UpdateDraftModel(**update_body.model_dump())
+    update_model = {
+        k: v for k, v in update_model.model_dump(by_alias=True).items() if v is not None
+    }
+
+    updated_draft = await db.drafts.update_one({"_id": ObjectId(draft_id)},
+                                            {"$set": update_model})
+    if updated_draft:
+        new_draft = await db.drafts.find_one({"_id": ObjectId(draft_id)})
+        return DraftModel(**new_draft)
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft not updated.")
+
+@router.put("/draft/{draft_id}/pick",
+            tags=["draft"],
+            response_description="Pick a Pokemon in the draft.",
+            response_model=DraftModel,
+            response_model_by_alias=False,
+)
+async def pick_pokemon(draft_id: str,
+                       pick: str,
+                       current_user: UserModel = Depends(get_current_user)):
+    '''
+    Pick a Pokemon in the draft.
+    '''
+    db = pokedrafter_db
+    draft = await db.drafts.find_one({"_id": ObjectId(draft_id)})
+    room = await db.rooms.find_one({"_id": ObjectId(draft["room"])})
+
+    if not draft:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Draft not found.")
+    if current_user.id not in room["participants"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Unauthorized.")
+    if draft["current_pick"] != current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Not your turn to pick.")
+    if all(pick not in values for values in draft["draft_board"].values()):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Pokemon not in draft board.")
+    if not all(pick not in picks for picks in draft["picks"].values()):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Pokemon already picked.")
+    # don't allow users to exceed point limit
+    pokemon_score = 0
+    for row in draft["draft_board"].keys():
+        if pick in draft["draft_board"][row]:
+            pokemon_score = int(row)
+            break
+    if current_user.id not in draft["player_scores"].keys():
+        draft["player_scores"][current_user.id] = 0
+    if draft["player_scores"][current_user.id] + pokemon_score > draft["point_limit"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Exceeds point limit.")
+    # don't allow users to exceed pokemon limit
+    if current_user.id not in draft["picks"].keys():
+        draft["picks"][current_user.id] = []
+    if len(draft["picks"][current_user.id]) > draft["pokemon_limit"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Exceeds pokemon limit.")
+
+    draft["picks"][current_user.id].append(pick)
+    draft["player_scores"][current_user.id] += pokemon_score
+
+    # reverse pick order if current is last pick
+    if draft["current_pick"] == draft["pick_order"][-1]:
+        draft["pick_order"].reverse()
+        draft["current_pick"] = draft["pick_order"][0]
+    else:
+        draft["current_pick"] = draft["pick_order"][draft["pick_order"].index(draft["current_pick"]) + 1]
+
+    updated_draft = await db.drafts.update_one({"_id": ObjectId(draft_id)}, {"$set": draft})
+    if updated_draft:
+        new_draft = await db.drafts.find_one({"_id": ObjectId(draft_id)})
+        return DraftModel(**new_draft)
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft not updated.")
+ 

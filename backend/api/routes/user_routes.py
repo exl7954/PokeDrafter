@@ -122,8 +122,8 @@ async def update_user(update_body: UserUpdate = Body(...),
         k: v for k, v in update_body.model_dump(by_alias=True).items() if v is not None
     }
 
-    if update_body.password:
-        update_body.password = bcrypt.hashpw(update_body.password.encode("utf-8"),
+    if "password" in update_body:
+        update_body["password"] = bcrypt.hashpw(update_body["password"].encode("utf-8"),
                                              bcrypt.gensalt()).decode("utf-8")
     updated_user = await db.users.update_one({"_id": ObjectId(current_user.id)},
                                     {"$set": update_body})

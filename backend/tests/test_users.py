@@ -77,6 +77,30 @@ async def test_get_me(client):
     assert response.status_code == 200
     assert response.json()["username"] == "pytestuser"
 
+@pytest.mark.anyio
+async def test_update_user(client):
+    '''
+    Test updating a user.
+    '''
+    response = await client.put("/users/update",
+                                headers={"Authorization": f"Bearer {token_dict['pytestuser']}"},
+                                json={"email": "pytest2@pytest.com", "password": "newpassword"})
+    assert response.status_code == 200
+    assert response.json()["email"] == "pytest2@pytest.com"
+
+@pytest.mark.anyio
+async def test_login_after_pw_change(client):
+    '''
+    Test logging in a user after changing the password.
+    '''
+    username = "pytestuser"
+    password = "newpassword"
+    response = await client.post("/token",
+                            headers={"Content-Type": "application/x-www-form-urlencoded"},
+                            data={"username": username, "password": password})
+    token_dict[username] = response.json()["access_token"]
+    assert response.status_code == 200
+    assert response.json()["access_token"]
 
 @pytest.mark.anyio
 async def test_delete_user(client):

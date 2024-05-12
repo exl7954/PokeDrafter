@@ -52,6 +52,8 @@ async def get_user(username: str):
     Get the user.
     '''
     user = await db.get_collection("users").find_one({"username": username})
+    if not user:
+        return None
     return UserModel(**user)
 
 async def authenticate_user(username: str, password: str):

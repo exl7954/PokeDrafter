@@ -27,12 +27,17 @@ async def create_user(user: UserCreate = Body(...)):
     db = pokedrafter_db
 
     # Check for existing user
-    existing_user = await db.users.find_one({
+    if user.email:
+        existing_user = await db.users.find_one({
         "$or": [
             {"username": user.username},
             {"email": user.email}
-        ]
-    })
+            ]
+        })
+    else:
+        existing_user = await db.users.find_one({"username": user.username})
+
+    
     if existing_user:
         if existing_user["username"] == user.username:
             raise HTTPException(

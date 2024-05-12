@@ -151,7 +151,7 @@ async def join_room(room_id: str, current_user: UserModel = Depends(get_current_
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")
 
-@router.put("/rooms/update/{room_id}/participants/invite",
+@router.put("/rooms/update/{room_id}/participants/invite/{invitee_id}",
             tags=["rooms"],
             response_description="Invite user to room.",
             response_model=RoomModel,
@@ -186,7 +186,7 @@ async def invite_to_room(room_id: str, invitee_id: str, current_user: UserModel 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")
 
-@router.put("/rooms/update/{room_id}/participants/accept",
+@router.put("/rooms/update/{room_id}/participants/accept/{participant_id}",
             tags=["rooms"],
             response_description="Accept incoming request or outgoing request.",
             response_model=RoomModel,
@@ -226,7 +226,7 @@ async def accept_participant(room_id: str,
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")
 
-@router.put("/rooms/update/{room_id}/participants/reject",
+@router.put("/rooms/update/{room_id}/participants/reject/{participant_id}",
             tags=["rooms"],
             response_description="Reject incoming request or outgoing request.",
             response_model=RoomModel,
@@ -264,7 +264,7 @@ async def reject_participant(room_id: str,
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")
 
-@router.delete("/rooms/update/{room_id}/participants/remove",
+@router.put("/rooms/update/{room_id}/participants/remove",
                 tags=["rooms"],
                 response_description="Remove participant from room.",
                 response_model=RoomModel,
@@ -291,8 +291,10 @@ async def remove_participant(room_id: str,
                                     detail="Not authorized to remove creator from room.")
 
         if current_user.id in room["moderators"]:
-            await db.rooms.update_one({"_id": ObjectId(room_id)},
-                                      {"$pull": {"participants": {"$in": [ObjectId(participant) for participant in participants.participants]}}})
+            await db.rooms.update_one(
+                {"_id": ObjectId(room_id)},
+                {"$pull": {"participants": {"$in": list(participants.participants)}}}
+            )
             updated_room = await db.rooms.find_one({"_id": ObjectId(room_id)})
             return RoomModel(**updated_room)
 

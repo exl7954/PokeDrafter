@@ -194,6 +194,52 @@ async def test_reject_invite(client):
     assert user_dict["pytestroomuser"] not in response.json()["outgoing_invites"]
 
 @pytest.mark.anyio
+async def test_leave_room(client):
+    '''
+    Test leaving a room.
+    '''
+    # change policy to open
+    await client.put(f"/rooms/update/{room_dict['pytestroom']}",
+        headers={"Authorization": f"Bearer {token_dict['pytestroomowner']}"},
+        json={"invite_policy": "open"})
+
+    # add user to room
+    await client.put(f"/rooms/update/{room_dict['pytestroom']}/participants/join",
+        headers={"Authorization": f"Bearer {token_dict['pytestroomuser']}"})
+
+    response = await client.put(f"/rooms/update/{room_dict['pytestroom']}/participants/leave",
+        headers={"Authorization": f"Bearer {token_dict['pytestroomuser']}"})
+
+    assert response.status_code == 200
+    assert user_dict["pytestroomuser"] not in response.json()["participants"]
+
+@pytest.mark.anyio
+async def test_add_moderator(client):
+    '''
+    Test adding a moderator to a room.
+    '''
+    response = await client.put(f"/rooms/update/{room_dict['pytestroom']}/moderators",
+        headers={"Authorization": f"Bearer {token_dict['pytestroomowner']}"},
+        json={"moderators": [user_dict["pytestroomuser"], user_dict["pytestroomowner"]]})
+
+    assert response.status_code == 200
+    assert user_dict["pytestroomuser"] in response.json()["moderators"]
+    assert user_dict["pytestroomowner"] in response.json()["moderators"]
+
+@pytest.mark.anyio
+async def test_remove_moderator(client):
+    '''
+    Test removing a moderator from a room.
+    '''
+    response = await client.put(f"/rooms/update/{room_dict['pytestroom']}/moderators",
+        headers={"Authorization": f"Bearer {token_dict['pytestroomowner']}"},
+        json={"moderators": [user_dict["pytestroomowner"]]})
+
+    assert response.status_code == 200
+    assert user_dict["pytestroomuser"] not in response.json()["moderators"]
+    assert user_dict["pytestroomowner"] in response.json()["moderators"]
+
+@pytest.mark.anyio
 async def test_delete_room(client):
     '''
     Test deleting a room.

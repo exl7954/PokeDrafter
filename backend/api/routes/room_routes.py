@@ -264,6 +264,32 @@ async def reject_participant(room_id: str,
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                         detail="Room not found.")
 
+@router.put("/rooms/update/{room_id}/participants/leave",
+            tags=["rooms"],
+            response_description="Leave room.",
+            response_model=RoomModel,
+            response_model_by_alias=False
+)
+async def leave_room(room_id: str, current_user: UserModel = Depends(get_current_user)):
+    '''
+    Leave room.
+    '''
+    db = pokedrafter_db
+
+    room = await db.rooms.find_one({"_id": ObjectId(room_id)})
+    if room:
+        if current_user.id in room["participants"]:
+            await db.rooms.update_one({"_id": ObjectId(room_id)},
+                                      {"$pull": {"participants": current_user.id}})
+            updated_room = await db.rooms.find_one({"_id": ObjectId(room_id)})
+            return RoomModel(**updated_room)
+
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="User not in room.")
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Room not found.")
+
 @router.put("/rooms/update/{room_id}/participants/remove",
                 tags=["rooms"],
                 response_description="Remove participant from room.",
@@ -315,6 +341,7 @@ async def update_room_moderators(room_id: str,
                                  current_user: UserModel = Depends(get_current_user)):
     '''
     Update room moderators.
+    Replaces all moderators with new list.
     '''
     db = pokedrafter_db
 

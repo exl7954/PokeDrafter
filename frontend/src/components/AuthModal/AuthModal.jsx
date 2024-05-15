@@ -1,4 +1,4 @@
-import { TextInput, Button, Text } from '@mantine/core';
+import { TextInput, Button, Text, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
 
@@ -16,6 +16,26 @@ export default function AuthModal({ close }) {
             ),
             password: (value) => (
                 value.length < 6 || value.length > 20 ? 'Invalid Password' : null
+            ),
+        }
+    });
+
+    const registerForm = useForm({
+        mode: 'uncontrolled',
+        validateInputOnBlur: false,
+        initialValues: {username: '', password: '', email: '', confirmPassword: ''},
+        validate: {
+            username: (value) => (
+                value.length < 3 || value.length > 20 || /^[a-zA-Z0-9_]*$/.test(value) == false ? 'Invalid Username' : null
+            ),
+            password: (value) => (
+                value.length < 6 || value.length > 20 ? 'Invalid Password' : null
+            ),
+            email: (value) => (
+                /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) == false ? 'Invalid Email' : null
+            ),
+            confirmPassword: (value) => (
+                value !== registerForm.values.password ? 'Passwords do not match' : null
             ),
         }
     });
@@ -62,9 +82,13 @@ export default function AuthModal({ close }) {
                 disabled={loading}
             />
             {error && <Text c="red" size="sm">{error}</Text>}
-            <Button type="submit" mt="sm" disabled={loading}>
-                Submit
-            </Button>
+            <Group>
+                
+                <Button type="submit" mt="sm" disabled={loading}>
+                    Submit
+                </Button>
+            </Group>
+            
         </form>
     );
 }

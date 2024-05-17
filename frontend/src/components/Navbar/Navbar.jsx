@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Center, Tooltip, UnstyledButton, Stack, rem, Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import AuthModal from '../AuthModal/AuthModal';
@@ -24,14 +25,15 @@ function NavbarLink({ icon: Icon, label, active, onClick }) {
 }
 
 const data = [
-    { icon: IconHome, label: 'Home' },
-    { icon: IconUsersGroup, label: 'Rooms' },
-    { icon: IconBook2, label: 'Drafts' },
-    { icon: IconUser, label: 'Profile' },
+    { icon: IconHome, label: 'Home', to: '/home'},
+    { icon: IconUsersGroup, label: 'Rooms', to: '/rooms'},
+    { icon: IconBook2, label: 'Drafts', to: '/drafts'},
+    { icon: IconUser, label: 'Profile', to: '/profile'},
 ];
 
 
 export default function Navbar() {
+    const navigate = useNavigate();
     const [active, setActive] = useState(0);
     const [loggedIn, setLoggedIn] = useState(false);
     const [opened, {open, close}] = useDisclosure(false);
@@ -47,7 +49,10 @@ export default function Navbar() {
           {...link}
           key={link.label}
           active={index === active}
-          onClick={() => setActive(index)}
+          onClick={() => {
+            setActive(index)
+            navigate(link.to)
+        }}
         />
     ));
 

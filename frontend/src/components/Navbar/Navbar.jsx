@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Center, Tooltip, UnstyledButton, Stack, rem, Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import AuthModal from '../AuthModal/AuthModal';
@@ -33,8 +33,10 @@ const data = [
 
 
 export default function Navbar() {
+    const location = useLocation();
     const navigate = useNavigate();
-    const [active, setActive] = useState(0);
+
+    const [active, setActive] = useState(data.findIndex((link) => link.to === location.pathname));
     const [loggedIn, setLoggedIn] = useState(false);
     const [opened, {open, close}] = useDisclosure(false);
 

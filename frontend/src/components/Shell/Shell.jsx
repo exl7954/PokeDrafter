@@ -11,6 +11,7 @@ export default function Shell() {
       <AppShell.Navbar>
         <Navbar />
       </AppShell.Navbar>
+      
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>

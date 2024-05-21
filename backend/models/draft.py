@@ -19,7 +19,6 @@ class DraftTemplate(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    rules: List[str] = Field(default_factory=list)
     bans: List[str] = Field(default_factory=list)
     point_limit: int = 115
     pokemon_limit: int = 12
@@ -56,7 +55,6 @@ class UpdateDraftModel(BaseModel):
     name: Optional[str] = Field(None, min_length=3, max_length=50)
     description: Optional[str] = None
 
-    rules: Optional[List[str]] = None
     bans: Optional[List[str]] = None
 
     tera_bans: Optional[List[str]] = None

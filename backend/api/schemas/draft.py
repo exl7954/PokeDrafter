@@ -15,7 +15,6 @@ class DraftTemplateCreate(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     description: Optional[str] = None
 
-    rules: List[str] = Field(default_factory=list)
     bans: List[str] = Field(default_factory=list)
     point_limit: int = 115
     pokemon_limit: int = 12
@@ -48,7 +47,6 @@ class DraftUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, min_length=3, max_length=50)
     description: Optional[str] = None
 
-    rules: Optional[List[str]] = None
     bans: Optional[List[str]] = None
     point_limit: Optional[int] = None
     pokemon_limit: Optional[int] = None

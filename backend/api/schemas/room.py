@@ -13,6 +13,7 @@ class RoomCreate(BaseModel):
     '''
     name: str = Field(..., min_length=3, max_length=50)
     description: Optional[str] = None
+    rules: Optional[str] = None
     max_participants: int = Field(12, ge=4, le=20)
     invite_policy: RoomInvitePolicy = RoomInvitePolicy.OPEN
 
@@ -22,6 +23,7 @@ class RoomUpdateMeta(BaseModel):
     '''
     name: Optional[str] = Field(None, min_length=3, max_length=50)
     description: Optional[str] = None
+    rules: Optional[str] = None
     room_status: Optional[RoomStatus] = None
     max_participants: Optional[int] = Field(None, ge=4, le=20)
     invite_policy: Optional[RoomInvitePolicy] = None

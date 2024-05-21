@@ -44,6 +44,7 @@ class RoomModel(BaseModel):
     invite_policy: RoomInvitePolicy = RoomInvitePolicy.OPEN
 
     draft: Optional[PyObjectId] = None
+    rules: Optional[str] = None
 
     moderators: List[PyObjectId] = []
     creator: PyObjectId= None
@@ -70,6 +71,7 @@ class UpdateRoomModel(BaseModel):
     invite_policy: Optional[RoomInvitePolicy] = None
 
     draft: Optional[PyObjectId] = None
+    rules: Optional[str] = None
 
     moderators: Optional[List[PyObjectId]] = None
 

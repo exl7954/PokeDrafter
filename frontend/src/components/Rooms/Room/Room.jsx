@@ -9,7 +9,7 @@ import {
     Stack,
     Tabs,
 } from '@mantine/core';
-import Rules from "./Rules.jsx";
+import Rules from "./Rules/Rules.jsx";
 import { Badges } from '../Badges.jsx';
 
 function convertDate(date) {

@@ -25,7 +25,7 @@ export default function AuthModal({ close }) {
                 type === 'login' ? null : value.length < 6 || value.length > 20 ? 'Invalid Password' : null
             ),
             email: (value) => (
-                type === 'login' ? null : /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) == false ? 'Invalid Email' : null
+                type === 'login' ? null : value == '' ? null : /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value) == false ? 'Invalid Email' : null
             ),
             confirmPassword: (value) => (
                 type === 'login' ? null : value !== loginForm.getValues().password ? 'Passwords do not match' : null
@@ -63,10 +63,13 @@ export default function AuthModal({ close }) {
                 'password': values.password
             })
         });
+
         setLoading(false);
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user_id', data.user_id);
+            console.log(data.user_id);
             close();
         } else {
             // show error message

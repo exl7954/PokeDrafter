@@ -28,6 +28,7 @@ class Token(BaseModel):
     '''
     access_token: str
     token_type: str
+    user_id: str
 
 class TokenData(BaseModel):
     '''
@@ -116,8 +117,9 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    id = user.id
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=access_token, token_type="bearer", user_id=id)

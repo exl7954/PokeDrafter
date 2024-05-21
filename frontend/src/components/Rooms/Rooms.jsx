@@ -16,8 +16,8 @@ export function Rooms() {
             <h1>Rooms</h1>
             <ul>
                 {rooms.map(room => (
-                    <UnstyledButton onClick={() => {navigate(`/rooms/${room.id}`)}}>
-                        <li key={room.id}>{room.name}</li>
+                    <UnstyledButton key={room.id} onClick={() => {navigate(`/rooms/${room.id}`)}}>
+                        <li>{room.name}</li>
                     </UnstyledButton>
                 ))}
             </ul>

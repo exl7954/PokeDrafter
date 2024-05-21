@@ -41,7 +41,7 @@ export default function Navbar() {
     const [opened, {open, close}] = useDisclosure(false);
 
     useEffect(() => {
-        if (localStorage.getItem('token')) {
+        if (localStorage.getItem('token') && localStorage.getItem('user_id')) {
             setLoggedIn(true);
         }
     }, [opened])
@@ -61,6 +61,7 @@ export default function Navbar() {
     function handleLoginClick() {
         if (loggedIn) {
             localStorage.removeItem('token');
+            localStorage.removeItem('user_id');
             setLoggedIn(false);
         } else {
             open();

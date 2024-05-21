@@ -58,6 +58,7 @@ export function Room() {
     const roomData = useLoaderData();
     const updatedAt = new Date(roomData.updated_at);
     const timedelta = convertDate(updatedAt);
+    const authorized_users = [... new Set([...roomData.moderators, roomData.creator])]
 
     return (
         <Paper shadow="xs" withBorder p="xl" pt="md">
@@ -92,7 +93,7 @@ export function Room() {
                     </Tabs.List>
 
                     <Tabs.Panel value="rules">
-                        <Rules />
+                        <Rules room_id={roomData.id} authorized_users={authorized_users} content={roomData.rules || ''}/>
                     </Tabs.Panel>
                     <Tabs.Panel value="draft">
                         <Text>Draft</Text>

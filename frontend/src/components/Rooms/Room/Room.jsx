@@ -10,6 +10,7 @@ import {
     Tabs,
 } from '@mantine/core';
 import Rules from "./Rules/Rules.jsx";
+import DraftBoard from "../../Drafts/DraftBoard/DraftBoard.jsx";
 import { Badges } from '../Badges.jsx';
 
 function convertDate(date) {

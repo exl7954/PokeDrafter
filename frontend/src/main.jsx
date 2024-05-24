@@ -5,6 +5,9 @@ import App from './App.jsx'
 import ErrorPage from './components/ErrorPage/ErrorPage'
 import {Room, getRoom} from './components/Rooms/Room/Room.jsx'
 import {Rooms, getRooms} from './components/Rooms/Rooms.jsx'
+import {Drafts, getDrafts} from './components/Drafts/Drafts.jsx'
+import CreateDraft from './components/Drafts/CreateDraft/CreateDraft.jsx'
+import { getPokemon } from './components/Drafts/CreateDraft/CreateDraftBoard.jsx'
 import {
   createBrowserRouter,
   RouterProvider,
@@ -37,11 +40,16 @@ const router = createBrowserRouter([
         path: 'rooms/:id',
         element: <Room />,
         loader: getRoom,
-          
       },
       {
         path: 'drafts',
-        element: <div>drafts</div>,
+        element: <Drafts />,
+        loader: getDrafts,
+      },
+      {
+        path: 'drafts/new',
+        element: <CreateDraft />,
+        loader: getPokemon,
       },
       {
         path: 'profile',

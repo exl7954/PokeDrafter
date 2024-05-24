@@ -281,4 +281,3 @@ async def pick_pokemon(draft_id: str,
         return DraftModel(**new_draft)
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft not updated.")
- 

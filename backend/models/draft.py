@@ -26,7 +26,7 @@ class DraftTemplate(BaseModel):
     tera_bans: List[str] = Field(default_factory=list)
     tera_captains: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
 
-    draft_board: Dict[int, List[str]] = Field(default_factory=list)
+    draft_board: Dict[int, List[str]] = Field(default_factory=dict)
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

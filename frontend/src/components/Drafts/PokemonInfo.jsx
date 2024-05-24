@@ -10,6 +10,7 @@ import {
     Center,
     Divider,
     Button,
+    Progress,
 } from '@mantine/core';
 import { useFetch } from '@mantine/hooks';
 import { useState, useEffect } from 'react';
@@ -17,9 +18,15 @@ import { useState, useEffect } from 'react';
 export default function PokemonInfo({ pokemon }) {
     const { data, loading, error, refetch, abort } = useFetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.name}`);
     const [abilities, setAbilities] = useState([]);
+    
+    const [bannedAbilities, setBannedAbilities] = useState([]);
+    const [bannedMoves, setBannedMoves] = useState([]);
+
+    const [progressWidth, setProgressWidth] = useState(50);
 
     useEffect(() => {
         if (data) {
+            // abilities
             const newAbilities = [];
             const uniqueAbilities = data?.abilities.reduce((unique, ability) => {
                 if (!unique.includes(ability.ability.name)) {
@@ -37,6 +44,11 @@ export default function PokemonInfo({ pokemon }) {
                     })
             )).then(newAbilities => setAbilities(newAbilities));
         }
+    }, [data]);
+
+    useEffect(() => {
+        setBannedAbilities([]);
+        setBannedMoves([]);
     }, [data]);
 
     function capitalizeName(name) {
@@ -70,11 +82,12 @@ export default function PokemonInfo({ pokemon }) {
                 <Title order={4}>Abilities</Title>
                 <Text size="sm" c="dimmed">Click on an ability to ban it</Text>
                 </Box>
-
                 <Group justify="center">
                 {/* Map non-duplicate abilities */}
                 {
                     abilities.map((ability, index) => {
+                        const abilityName = Object.keys(ability)[0];
+                        const banned = bannedAbilities.includes(abilityName);
                         return (
                             <Center key={index}>
                                 <Tooltip
@@ -87,13 +100,75 @@ export default function PokemonInfo({ pokemon }) {
                                     <Button 
                                         variant="subtle"
                                         radius="lg"
-                                    >{formatAbility(Object.keys(ability)[0])}</Button>
+                                        c={banned ? "red" : "gray"}
+                                        onClick={() => {
+                                            if (banned) {
+                                                setBannedAbilities(bannedAbilities.filter(ability => ability !== abilityName));
+                                            } else {
+                                                setBannedAbilities([...bannedAbilities, abilityName]);
+                                            }
+                                        }}
+                                    >
+                                        <Text td={banned ? "line-through" : ""}>{formatAbility(abilityName)}</Text>
+                                    </Button>
                                 </Tooltip>
                             </Center>
                         );
                     })
                 }
                 </Group>
+
+                <Divider />
+
+                <Box>
+                    <Group>
+                        <Text ta='right' w={70} size="md">HP</Text>
+                        <Progress.Root size="sm" w={`${data?.stats[0].base_stat / 255 * 70}%`}>
+                            <Progress.Section value={100}></Progress.Section>
+                        </Progress.Root>
+                        <Text size="sm">{data?.stats[0].base_stat}</Text>
+                    </Group>
+                    <Group>
+                        <Text ta='right' w={70} size="md">Attack</Text>
+                        <Progress.Root size="sm" w={`${data?.stats[1].base_stat / 255 * 70}%`}>
+                            <Progress.Section value={100}></Progress.Section>
+                        </Progress.Root>
+                        <Text size="sm">{data?.stats[1].base_stat}</Text>
+                    </Group>
+                    <Group>
+                        <Text ta='right' w={70} size="md">Defense</Text>
+                        <Progress.Root size="sm" w={`${data?.stats[2].base_stat / 255 * 70}%`}>
+                            <Progress.Section value={100}></Progress.Section>
+                        </Progress.Root>
+                        <Text size="sm">{data?.stats[2].base_stat}</Text>
+                    </Group>
+                    <Group>
+                        <Text ta='right' w={70} size="md">Sp. Atk</Text>
+                        <Progress.Root size="sm" w={`${data?.stats[3].base_stat / 255 * 70}%`}>
+                            <Progress.Section value={100}></Progress.Section>
+                        </Progress.Root>
+                        <Text size="sm">{data?.stats[3].base_stat}</Text>
+                    </Group>
+                    <Group>
+                        <Text ta='right' w={70} size="md">Sp. Def</Text>
+                        <Progress.Root size="sm" w={`${data?.stats[4].base_stat / 255 * 70}%`}>
+                            <Progress.Section value={100}></Progress.Section>
+                        </Progress.Root>
+                        <Text size="sm">{data?.stats[4].base_stat}</Text>
+                    </Group>
+                    <Group>
+                        <Text ta='right' w={70} size="md">Speed</Text>
+                        <Progress.Root size="sm" w={`${data?.stats[5].base_stat / 255 * 70}%`}>
+                            <Progress.Section value={100}></Progress.Section>
+                        </Progress.Root>
+                        <Text size="sm">{data?.stats[5].base_stat}</Text>
+                    </Group>
+
+                </Box>
+
+                <Button onClick={() => setProgressWidth(Math.random() * 100)} mt="md">
+                    Set random value
+                </Button>
                 
             </Stack>
         </Card>

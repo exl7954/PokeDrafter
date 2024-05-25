@@ -92,7 +92,11 @@ export function CreateDraftBoard() {
 
         <Modal
             opened={isPokemonModalOpen}
-            onClose={() => setIsPokemonModalOpen(false)}
+            onClose={() => {
+                setIsPokemonModalOpen(false);
+                setPokemonValue('');
+                setPokemonToBeAdded('');
+            }}
             size="lg"
             title="Add New Pokémon"
         >

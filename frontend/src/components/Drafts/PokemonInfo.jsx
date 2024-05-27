@@ -55,12 +55,22 @@ export default function PokemonInfo({ pokemon, bannedAbilities, bannedMoves, set
             
             Promise.all(uniqueAbilities.map(ability =>
                 fetch(`https://pokeapi.co/api/v2/ability/${ability}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const effect = data.effect_entries.length > 0 ? findEnglish(data.effect_entries).effect : findEnglish(data.flavor_text_entries).flavor_text;
                         return { [ability]: effect };
                     })
-            )).then(newAbilities => setAbilities(newAbilities));
+                    .catch(error => {
+                        console.error('There was a problem with the fetch operation: ', error);
+                        return {}; // return an empty object when there's an error
+                    })
+            )).then(newAbilities => setAbilities(newAbilities.filter(ability => Object.keys(ability).length !== 0))) // filter out any empty objects
+              .catch(error => console.error('Error setting new abilities:', error));
 
             // moves
             const newMoveData = [];
@@ -70,7 +80,8 @@ export default function PokemonInfo({ pokemon, bannedAbilities, bannedMoves, set
                         .then(response => response.json())
                         .then(data => {
                             newMoveData.push(data);
-                        });
+                        })
+                        .catch(error => console.error(`Error fetching move data for ${move.move.url}:`, error));
                 });
                 setMoveData(newMoveData);
                 setFilteredMoves(newMoveData);
@@ -78,14 +89,6 @@ export default function PokemonInfo({ pokemon, bannedAbilities, bannedMoves, set
 
         }
     }, [data]);
-
-    useEffect(() => {
-        setBannedAbilities([]);
-        setBannedMoves([]);
-        setNotes('');
-        setMoveSearch('');
-    }, [data]);
-
 
     function handleMoveClick(move) {
         if (bannedMoves.includes(move)) {

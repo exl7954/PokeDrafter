@@ -1,7 +1,7 @@
 import { Image, Tooltip, Group, ActionIcon, Text, Stack, Title, } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconPencil, IconX } from '@tabler/icons-react';
 
-const PokemonCell = ({ pokemon }) => {
+const PokemonCell = ({ pokemon, handleEditPokemon, handleRemovePokemon }) => {
     const { name, sprite, bannedAbilities, bannedMoves, notes } = pokemon;
 
     return (
@@ -38,6 +38,15 @@ const PokemonCell = ({ pokemon }) => {
                         <IconAlertCircle size={18} color="lightgray" />
                     </Tooltip>
                 )}
+            </Group>
+
+            <Group gap={2} pos="absolute" top={0} left={5}>
+                <ActionIcon onClick={handleEditPokemon} variant="subtle" size={20} opacity={0.5}>
+                    <IconPencil />
+                </ActionIcon>
+                <ActionIcon onClick={handleRemovePokemon} variant="subtle" size={20} opacity={0.5}>
+                    <IconX />
+                </ActionIcon>
             </Group>
         </Group>
     );

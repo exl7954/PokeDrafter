@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, UnstyledButton, Center } from '@mantine/core';
+import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, UnstyledButton, Center, ActionIcon } from '@mantine/core';
+import { IconPlus } from '@tabler/icons-react';
 import { useLoaderData } from 'react-router-dom';
 import PokemonInfo from '../PokemonInfo';
 import PokemonCell from '../PokemonCell';
@@ -18,6 +19,8 @@ export function CreateDraftBoard() {
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
     const [isPokemonModalOpen, setIsPokemonModalOpen] = useState(false);
+    const [isEditingPokemon, setIsEditingPokemon] = useState(false);
+    const [editingPokemonIndex, setEditingPokemonIndex] = useState(null);
     const [pokemonValue, setPokemonValue] = useState('');
     const [pokemonToBeAdded, setPokemonToBeAdded] = useState('');
     const [pokemonDropdownOpened, setPokemonDropdownOpened] = useState(false);
@@ -34,9 +37,33 @@ export function CreateDraftBoard() {
         }
     };
 
+    const clearPokemonInfo = () => {
+        setBannedAbilities([]);
+        setBannedMoves([]);
+        setNotes('');
+    };
+
     const handleAddPokemon = () => {
         if (pokemonToBeAdded.trim() && selectedColumnIndex !== null) {
-            const updatedColumns = columns.map((column, index) =>
+            let updatedColumns;
+            if (isEditingPokemon) {
+                updatedColumns = columns.map((column, index) =>
+                    index === selectedColumnIndex
+                    ? { ...column, pokemon: column.pokemon.map((pokemon, pokeIndex) =>
+                        pokeIndex === editingPokemonIndex
+                        ? { ...pokemon,
+                            name: pokemonToBeAdded,
+                            sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
+                            bannedAbilities: bannedAbilities,
+                            bannedMoves: bannedMoves,
+                            notes: notes
+                        }
+                        : pokemon
+                    )}
+                    : column
+                );
+            } else {
+                updatedColumns = columns.map((column, index) =>
                 index === selectedColumnIndex
                 ? { ...column, pokemon: [...column.pokemon, {
                     name: pokemonToBeAdded,
@@ -47,23 +74,81 @@ export function CreateDraftBoard() {
                 }] }
                 : column
             );
+            }
             setColumns(updatedColumns);
             setPokemonValue('');
             setPokemonToBeAdded('');
             setSelectedColumnIndex(null);
             setIsPokemonModalOpen(false);
+            clearPokemonInfo();
         }
+    };
+
+    const handleDirectAddPokemon = (pokemon) => {
+        if (pokemon.trim() && selectedColumnIndex !== null) {
+            const updatedColumns = columns.map((column, index) =>
+                index === selectedColumnIndex
+                ? { ...column, pokemon: [...column.pokemon, {
+                    name: pokemon,
+                    sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((p) => p.name === pokemon).url.split('/')[6]}.png`,
+                    bannedAbilities: [],
+                    bannedMoves: [],
+                    notes: ''
+                }] }
+                : column
+            );
+            setColumns(updatedColumns);
+            setPokemonValue('');
+            setPokemonToBeAdded('');
+            setSelectedColumnIndex(null);
+            setIsPokemonModalOpen(false);
+            clearPokemonInfo();
+        }
+    };
+
+    const handleEditPokemon = (pokemon, pokeIndex, columnIndex) => {
+        setIsEditingPokemon(true);
+        setEditingPokemonIndex(pokeIndex);
+        setPokemonValue(pokemon.name);
+        setPokemonToBeAdded(pokemon.name);
+        setBannedAbilities(pokemon.bannedAbilities);
+        setBannedMoves(pokemon.bannedMoves);
+        setNotes(pokemon.notes);
+        setSelectedColumnIndex(columnIndex);
+        setIsPokemonModalOpen(true);
+    };
+
+    const handleRemovePokemon = (pokeIndex, columnIndex) => {
+        const updatedColumns = columns.map((column, index) =>
+            index === columnIndex
+            ? { ...column, pokemon: column.pokemon.filter((pokemon, index) => index !== pokeIndex) }
+            : column
+        );
+        setColumns(updatedColumns);
     };
 
     function renderAutocompleteOption({option}) {
         const pokedexNumber = POKEMON_DATA.find((pokemon) => pokemon.name === option.value).url.split('/')[6];
         const imgSrc = `/src/assets/pokemon-sprites/sprites/pokemon/${pokedexNumber}.png`;
         return(
-            <Group gap="sm">
-                <Image src={imgSrc} alt={option.value} width={32} />
-                <div>
-                <Text size="sm">{option.value}</Text>
-                </div>
+            <Group justify="space-between" w="100%">
+                <Group gap="sm">
+                    <Image src={imgSrc} alt={option.value} width={32} />
+                    <div>
+                    <Text size="sm">{option.value}</Text>
+                    </div>
+                </Group>
+
+                <ActionIcon
+                    mr={10}
+                    variant='outline'
+                    onClick={() => {
+                        handleDirectAddPokemon(option.value);
+                    }}
+                    title="Add Pokémon"
+                >
+                    <IconPlus size={16} />
+                </ActionIcon>
             </Group>
         );
     };
@@ -73,12 +158,12 @@ export function CreateDraftBoard() {
         <Title align="center" mb="xl">Draft Board</Title>
         <Group spacing="lg" align="flex-start">
             {columns.map((column, columnIndex) => (
-            <Card key={columnIndex} shadow="sm" p="lg" style={{ minWidth: '200px' }}>
+            <Card key={columnIndex} p="lg" style={{ minWidth: '200px' }}>
                 <Stack spacing="xs">
                 <Title order={4}>{column.name}</Title>
                 {column.pokemon.map((poke, pokeIndex) => (
                     <Center key={pokeIndex}>
-                        <PokemonCell pokemon={poke} />
+                        <PokemonCell pokemon={poke} handleEditPokemon={() => handleEditPokemon(poke, pokeIndex, columnIndex)} handleRemovePokemon={() => handleRemovePokemon(pokeIndex, columnIndex)} />
                     </Center>
                 ))}
                 <Button onClick={() => {
@@ -110,6 +195,9 @@ export function CreateDraftBoard() {
                 setIsPokemonModalOpen(false);
                 setPokemonValue('');
                 setPokemonToBeAdded('');
+                setEditingPokemonIndex(null);
+                setIsEditingPokemon(false);
+                clearPokemonInfo();
             }}
             size="lg"
             title="Add New Pokémon"
@@ -123,6 +211,7 @@ export function CreateDraftBoard() {
                     setPokemonValue(value);
                     setPokemonToBeAdded(value);
                     setPokemonDropdownOpened(false);
+                    clearPokemonInfo();
                 } }}
                 onChange={(value) => {
                     setPokemonValue(value)
@@ -151,7 +240,11 @@ export function CreateDraftBoard() {
             </Stack>
             
 
-            <Button onClick={handleAddPokemon} mt="md">Add Pokémon</Button>
+            <Button onClick={() => {
+                handleAddPokemon();
+                setIsEditingPokemon(false);
+                setEditingPokemonIndex(null);
+            }} mt="md">{isEditingPokemon ? 'Save Changes' : 'Add Pokemon'}</Button>
         </Modal>
         </Container>
     );

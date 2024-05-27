@@ -13,20 +13,29 @@ import {
     Progress,
     Table,
     ScrollArea,
+    TextInput,
+    ActionIcon,
+    Collapse,
+    Textarea,
+    rem,
+    useMantineColorScheme,
 } from '@mantine/core';
-import { useFetch } from '@mantine/hooks';
+import { IconSearch, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { useDisclosure, useFetch } from '@mantine/hooks';
 import { useState, useEffect } from 'react';
 
-export default function PokemonInfo({ pokemon }) {
+export default function PokemonInfo({ pokemon, bannedAbilities, bannedMoves, setBannedAbilities, setBannedMoves, notes, setNotes }) {
+    const { colorScheme } = useMantineColorScheme();
     const { data, loading, error, refetch, abort } = useFetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.name}`);
     const [abilities, setAbilities] = useState([]);
-    
-    const [bannedAbilities, setBannedAbilities] = useState([]);
-    const [bannedMoves, setBannedMoves] = useState([]);
 
     const [statColors, setStatColors] = useState([]);
 
+    const [notesOpened, {toggle: toggleNotes}] = useDisclosure(false);
+
     const [moveData, setMoveData] = useState([]);
+    const [moveSearch, setMoveSearch] = useState('');
+    const [filteredMoves, setFilteredMoves] = useState([]);
 
     useEffect(() => {
         if (data) {
@@ -48,7 +57,7 @@ export default function PokemonInfo({ pokemon }) {
                 fetch(`https://pokeapi.co/api/v2/ability/${ability}`)
                     .then(response => response.json())
                     .then(data => {
-                        const effect = data.effect_entries.length > 0 ? data.effect_entries[1]?.effect : data.flavor_text_entries[0]?.flavor_text;
+                        const effect = data.effect_entries.length > 0 ? findEnglish(data.effect_entries).effect : findEnglish(data.flavor_text_entries).flavor_text;
                         return { [ability]: effect };
                     })
             )).then(newAbilities => setAbilities(newAbilities));
@@ -64,17 +73,92 @@ export default function PokemonInfo({ pokemon }) {
                         });
                 });
                 setMoveData(newMoveData);
+                setFilteredMoves(newMoveData);
             }
 
         }
     }, [data]);
 
-    generateTable(moveData);
-
     useEffect(() => {
         setBannedAbilities([]);
         setBannedMoves([]);
+        setNotes('');
+        setMoveSearch('');
     }, [data]);
+
+
+    function handleMoveClick(move) {
+        if (bannedMoves.includes(move)) {
+            setBannedMoves(bannedMoves.filter(m => m !== move));
+        } else {
+            setBannedMoves([...bannedMoves, move]);
+        }
+    }
+    
+    function handleMoveSearchChange(e) {
+        setMoveSearch(e.target.value);
+        setFilteredMoves(moveData.filter(move => formatString(move.name).toLowerCase().includes(e.target.value.toLowerCase())));
+    }
+    
+    function generateTable(moves) {
+        // moves.forEach(move => {
+        //     console.log(move.name, move.type.name, move.damage_class.name, move.power, move.accuracy, move.pp, move.effect_entries[0]?.effect)
+        // });
+    
+        const rows = filteredMoves.map((move) => {
+            const isStruck = bannedMoves.includes(move.name);
+            return (
+                <Table.Tr
+                    onClick={() => handleMoveClick(move.name)}
+                    key={move.name}
+                    style={{ 
+                        cursor: "pointer",
+                        textDecoration: isStruck ? "line-through" : "none",
+                    }}
+                    c={isStruck ? "red" : ""}
+                >
+                    <Table.Td>{formatString(move.name)}</Table.Td>
+                    <Table.Td>{move.type.name}</Table.Td>
+                    <Table.Td>{move.damage_class.name}</Table.Td>
+                    <Table.Td>{move.power}</Table.Td>
+                    <Table.Td>{move.accuracy}</Table.Td>
+                    <Table.Td>{move.pp}</Table.Td>
+                </Table.Tr>
+            )
+        });
+    
+        return (
+            <Box>
+            <TextInput
+                placeholder="Search by move name"
+                mb="xs"
+                leftSection={<IconSearch style={{ width: rem(16), height: rem(16) }} stroke={1.5} />}
+                value={moveSearch}
+                onChange={handleMoveSearchChange}
+            />
+            <ScrollArea h={250}>
+            <Table>
+                <Table.Thead>
+                    <Table.Tr>
+                        <Table.Th>Name</Table.Th>
+                        <Table.Th>Type</Table.Th>
+                        <Table.Th>Category</Table.Th>
+                        <Table.Th>Power</Table.Th>
+                        <Table.Th>Accuracy</Table.Th>
+                        <Table.Th>PP</Table.Th>
+                    </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                    {rows}
+                </Table.Tbody>
+            </Table>
+            </ScrollArea>
+            </Box>
+        );
+    }
+    
+
+    generateTable(moveData);
 
     const capitalizedName = capitalizeName(pokemon.name);
 
@@ -148,44 +232,47 @@ export default function PokemonInfo({ pokemon }) {
                 <Divider />
 
                 <Box>
-                <Title order={4}>Abilities</Title>
-                <Text size="sm" c="dimmed">Click on an ability to ban it</Text>
-                </Box>
-                <Group justify="center">
-                {/* Map non-duplicate abilities */}
-                {
-                    abilities.map((ability, index) => {
-                        const abilityName = Object.keys(ability)[0];
-                        const banned = bannedAbilities.includes(abilityName);
-                        return (
-                            <Center key={index}>
-                                <Tooltip
-                                    multiline
-                                    w={500}
-                                    label={Object.values(ability)[0]}
-                                    position="top"
-                                    withArrow
-                                >
-                                    <Button 
-                                        variant="subtle"
-                                        radius="lg"
-                                        c={banned ? "red" : "gray"}
-                                        onClick={() => {
-                                            if (banned) {
-                                                setBannedAbilities(bannedAbilities.filter(ability => ability !== abilityName));
-                                            } else {
-                                                setBannedAbilities([...bannedAbilities, abilityName]);
-                                            }
-                                        }}
+                    <Box>
+                    <Title order={4}>Abilities</Title>
+                    <Text size="sm" c="dimmed">Click on an ability to ban it</Text>
+                    </Box>
+
+                    <Group justify="center">
+                    {/* Map non-duplicate abilities */}
+                    {
+                        abilities.map((ability, index) => {
+                            const abilityName = Object.keys(ability)[0];
+                            const banned = bannedAbilities.includes(abilityName);
+                            return (
+                                <Center key={index}>
+                                    <Tooltip
+                                        multiline
+                                        w={500}
+                                        label={Object.values(ability)[0]}
+                                        position="top"
+                                        withArrow
                                     >
-                                        <Text td={banned ? "line-through" : ""}>{formatString(abilityName)}</Text>
-                                    </Button>
-                                </Tooltip>
-                            </Center>
-                        );
-                    })
-                }
-                </Group>
+                                        <Button 
+                                            variant="subtle"
+                                            radius="lg"
+                                            c={banned ? "red" : "gray"}
+                                            onClick={() => {
+                                                if (banned) {
+                                                    setBannedAbilities(bannedAbilities.filter(ability => ability !== abilityName));
+                                                } else {
+                                                    setBannedAbilities([...bannedAbilities, abilityName]);
+                                                }
+                                            }}
+                                        >
+                                            <Text td={banned ? "line-through" : ""}>{formatString(abilityName)}</Text>
+                                        </Button>
+                                    </Tooltip>
+                                </Center>
+                            );
+                        })
+                    }
+                    </Group>
+                </Box>
 
                 <Divider />
 
@@ -194,10 +281,24 @@ export default function PokemonInfo({ pokemon }) {
                 <Text size="sm" c="dimmed">Click on a move to ban it</Text>
                 </Box>
 
-                <ScrollArea h={300}>
                 {generateTable(moveData)}
-                </ScrollArea>
+
+                <Divider />
+
+                <Box>
+                    <Group justify="space-between">
+                        <Title order={4}>Additional Notes</Title>
+                        <ActionIcon variant="transparent" onClick={toggleNotes} color={colorScheme === 'dark' ? "white" : "black"}>
+                            {notesOpened ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+                        </ActionIcon>
+                    </Group>
+
+                    <Collapse in={notesOpened} mt="xs">
+                        <Textarea placeholder="Write down any notes here..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    </Collapse>
                 
+                </Box>
+
             </Stack>
         </Card>
     )
@@ -228,39 +329,7 @@ function statBarColor(stat) {
     }
 }
 
-function generateTable(moves) {
-    // moves.forEach(move => {
-    //     console.log(move.name, move.type.name, move.damage_class.name, move.power, move.accuracy, move.pp, move.effect_entries[0]?.effect)
-    // });
-
-    const rows = moves.map((move) => {
-        return (
-            <Table.Tr key={move.name}>
-                <Table.Td>{formatString(move.name)}</Table.Td>
-                <Table.Td>{move.type.name}</Table.Td>
-                <Table.Td>{move.damage_class.name}</Table.Td>
-                <Table.Td>{move.power}</Table.Td>
-                <Table.Td>{move.accuracy}</Table.Td>
-                <Table.Td>{move.pp}</Table.Td>
-            </Table.Tr>
-        )
-    });
-
-    return (
-        <Table>
-            <Table.Thead>
-                <Table.Tr>
-                    <Table.Th>Name</Table.Th>
-                    <Table.Th>Type</Table.Th>
-                    <Table.Th>Category</Table.Th>
-                    <Table.Th>Power</Table.Th>
-                    <Table.Th>Accuracy</Table.Th>
-                    <Table.Th>PP</Table.Th>
-                </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-                {rows}
-            </Table.Tbody>
-        </Table>
-    );
+function findEnglish(array) {
+    return array.find(item => item.language.name === 'en');
 }
+

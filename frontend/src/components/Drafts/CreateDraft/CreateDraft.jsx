@@ -26,7 +26,7 @@ export default function CreateDraft() {
                     </Text>
                 </Stack>
                 <Stack gap={10}>
-                    <TextInput label="Draft Name" description="Enter a name for your draft" placeholder="e.g. SV Paldea Dex (Post-DLC)"/>
+                    <TextInput label="Draft Name" description="Enter a name for your draft" placeholder="e.g. SV Paldea Dex"/>
                     <Textarea label="Draft Description" description="Enter a description for your draft" placeholder="Introduce the draft board and include any relevant notes"/>
                 </Stack>
 

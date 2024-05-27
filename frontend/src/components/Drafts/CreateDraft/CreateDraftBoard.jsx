@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, UnstyledButton } from '@mantine/core';
+import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, UnstyledButton, Center } from '@mantine/core';
 import { useLoaderData } from 'react-router-dom';
 import PokemonInfo from '../PokemonInfo';
+import PokemonCell from '../PokemonCell';
 
 export function CreateDraftBoard() {
     const POKEMON_DATA = useLoaderData();
@@ -21,6 +22,10 @@ export function CreateDraftBoard() {
     const [pokemonToBeAdded, setPokemonToBeAdded] = useState('');
     const [pokemonDropdownOpened, setPokemonDropdownOpened] = useState(false);
 
+    const [bannedAbilities, setBannedAbilities] = useState([]);
+    const [bannedMoves, setBannedMoves] = useState([]);
+    const [notes, setNotes] = useState('');
+
     const handleAddColumn = () => {
         if (newColumnName.trim()) {
         setColumns([...columns, { name: newColumnName, pokemon: [] }]);
@@ -30,16 +35,23 @@ export function CreateDraftBoard() {
     };
 
     const handleAddPokemon = () => {
-        if (pokemonValue.trim() && selectedColumnIndex !== null) {
-        const updatedColumns = columns.map((column, index) =>
-            index === selectedColumnIndex
-            ? { ...column, pokemon: [...column.pokemon, pokemonValue] }
-            : column
-        );
-        setColumns(updatedColumns);
-        setPokemonValue('');
-        setSelectedColumnIndex(null);
-        setIsPokemonModalOpen(false);
+        if (pokemonToBeAdded.trim() && selectedColumnIndex !== null) {
+            const updatedColumns = columns.map((column, index) =>
+                index === selectedColumnIndex
+                ? { ...column, pokemon: [...column.pokemon, {
+                    name: pokemonToBeAdded,
+                    sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
+                    bannedAbilities: bannedAbilities,
+                    bannedMoves: bannedMoves,
+                    notes: notes
+                }] }
+                : column
+            );
+            setColumns(updatedColumns);
+            setPokemonValue('');
+            setPokemonToBeAdded('');
+            setSelectedColumnIndex(null);
+            setIsPokemonModalOpen(false);
         }
     };
 
@@ -58,14 +70,16 @@ export function CreateDraftBoard() {
 
     return (
         <Container>
-        <Title align="center" mb="xl">Pokémon Draft Board</Title>
+        <Title align="center" mb="xl">Draft Board</Title>
         <Group spacing="lg" align="flex-start">
             {columns.map((column, columnIndex) => (
             <Card key={columnIndex} shadow="sm" p="lg" style={{ minWidth: '200px' }}>
                 <Stack spacing="xs">
                 <Title order={4}>{column.name}</Title>
                 {column.pokemon.map((poke, pokeIndex) => (
-                    <Text key={pokeIndex}>{poke}</Text>
+                    <Center key={pokeIndex}>
+                        <PokemonCell pokemon={poke} />
+                    </Center>
                 ))}
                 <Button onClick={() => {
                     setSelectedColumnIndex(columnIndex);
@@ -125,9 +139,17 @@ export function CreateDraftBoard() {
             />
 
             {pokemonToBeAdded &&
-                <PokemonInfo pokemon={POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded)} />
+                <PokemonInfo pokemon={POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded)}
+                bannedAbilities={bannedAbilities}
+                bannedMoves={bannedMoves}
+                setBannedAbilities={setBannedAbilities}
+                setBannedMoves={setBannedMoves} 
+                notes={notes}
+                setNotes={setNotes}
+                />
             }
             </Stack>
+            
 
             <Button onClick={handleAddPokemon} mt="md">Add Pokémon</Button>
         </Modal>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Center, Tooltip, UnstyledButton, Stack, rem, Modal } from '@mantine/core';
+import { Center, Tooltip, UnstyledButton, Stack, rem, Modal, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import AuthModal from '../AuthModal/AuthModal';
 import {
@@ -11,6 +11,8 @@ import {
     IconLogin,
     IconLogout,
     IconSettings,
+    IconMoon,
+    IconSun,
 } from '@tabler/icons-react';
 import classes from './Navbar.module.css';
 
@@ -40,6 +42,8 @@ export default function Navbar() {
     const [loggedIn, setLoggedIn] = useState(false);
     const [opened, {open, close}] = useDisclosure(false);
 
+    const { colorScheme, setColorScheme, clearColorScheme } = useMantineColorScheme();
+
     useEffect(() => {
         if (localStorage.getItem('token') && localStorage.getItem('user_id')) {
             setLoggedIn(true);
@@ -68,6 +72,14 @@ export default function Navbar() {
         }
     }
 
+    function toggleColorScheme() {
+        if (colorScheme === 'dark') {
+            setColorScheme('light');
+        } else {
+            setColorScheme('dark');
+        }
+    }
+
     return (
     <nav className={classes.navbar}>
         <Center>
@@ -81,6 +93,7 @@ export default function Navbar() {
         </div>
 
         <Stack justify="center" gap={5}>
+        <NavbarLink onClick={toggleColorScheme} icon={colorScheme === 'dark' ? IconSun : IconMoon} label="Toggle Color Scheme" />
         <NavbarLink icon={IconSettings} label="Settings" />
         <NavbarLink icon={loggedIn ? IconLogout : IconLogin} label={loggedIn ? "Logout" : "Login"} onClick={handleLoginClick} />
         </Stack>

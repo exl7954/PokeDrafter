@@ -19,9 +19,7 @@ export function Drafts() {
             </UnstyledButton>
             <ul>
                 {drafts.map(draft => (
-                    <UnstyledButton key={draft.id} onClick={() => {navigate(`/drafts/${draft.id}`)}}>
-                        <li>{draft.name}</li>
-                    </UnstyledButton>
+                    <li key={draft.id} onClick={() => {navigate(`/drafts/${draft.id}`)}}>{draft.name}</li>
                 ))}
             </ul>
         </div>
@@ -29,7 +27,7 @@ export function Drafts() {
 }
 
 export async function getDrafts() {
-    return fetch('/api/draft')
+    return fetch('/api/drafts')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to fetch drafts');

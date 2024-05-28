@@ -5,13 +5,9 @@ import { useLoaderData } from 'react-router-dom';
 import PokemonInfo from '../PokemonInfo';
 import PokemonCell from '../PokemonCell';
 
-export function CreateDraftBoard() {
+export function CreateDraftBoard({ bannedPokemon, setBannedPokemon, teraBannedPokemon, setTeraBannedPokemon, columns, setColumns }) {
     const POKEMON_DATA = useLoaderData();
 
-    const [bannedPokemon, setBannedPokemon] = useState([]);
-    const [teraBannedPokemon, setTeraBannedPokemon] = useState([]);
-
-    const [columns, setColumns] = useState([]);
     const [selectedColumnIndex, setSelectedColumnIndex] = useState(null);
 
     const [isColumnPopoverOpen, setIsColumnPopoverOpen] = useState(false);
@@ -206,7 +202,7 @@ export function CreateDraftBoard() {
         <Container fluid>
         <Title align="center" mb="xl">Draft Board</Title>
         <ScrollArea>
-        <Group align="flex-start" wrap="nowrap">
+        <Group align="flex-start" wrap="nowrap" mb="md">
             <Group align="flex-start" wrap="nowrap">
                 <Card key="banned-pokemon" p="lg" style={{ minWidth: '200px' }} c="red">
                     <Stack spacing="xs">

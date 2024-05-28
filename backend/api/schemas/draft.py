@@ -3,7 +3,7 @@ Schemas for draft related operations.
 '''
 #pylint: disable=duplicate-code
 from datetime import datetime
-from typing import List, Optional, Annotated, Dict
+from typing import Any, List, Optional, Annotated, Dict
 from pydantic import BaseModel, BeforeValidator, Field, ConfigDict
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
@@ -15,14 +15,11 @@ class DraftTemplateCreate(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     description: Optional[str] = None
 
-    bans: List[str] = Field(default_factory=list)
-    point_limit: int = 115
-    pokemon_limit: int = 12
+    point_limit: int = Field(default=115, gt=0)
+    pokemon_limit: int = Field(default=12, gt=0)
 
-    tera_bans: List[str] = Field(default_factory=list)
-    tera_captains: Dict[PyObjectId, List[str]] = Field(default_factory=dict)
-
-    draft_board: List[List[str]] = Field(default_factory=list)
+    rules: str = Field(default='')
+    draft_board: Dict[str, Any] = Field(default_factory=dict)
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

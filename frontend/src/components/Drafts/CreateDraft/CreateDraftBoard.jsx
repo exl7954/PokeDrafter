@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, Divider, Center, ActionIcon } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
+import { Container, Button, ScrollArea, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, Divider, Center, ActionIcon, NumberInput, Popover, FocusTrap } from '@mantine/core';
+import { IconPlus, IconX } from '@tabler/icons-react';
 import { useLoaderData } from 'react-router-dom';
 import PokemonInfo from '../PokemonInfo';
 import PokemonCell from '../PokemonCell';
@@ -11,13 +11,11 @@ export function CreateDraftBoard() {
     const [bannedPokemon, setBannedPokemon] = useState([]);
     const [teraBannedPokemon, setTeraBannedPokemon] = useState([]);
 
-    const [columns, setColumns] = useState([
-        { name: '19 Points', pokemon: []},
-    ]);
-    const [newColumnName, setNewColumnName] = useState('');
+    const [columns, setColumns] = useState([]);
     const [selectedColumnIndex, setSelectedColumnIndex] = useState(null);
 
-    const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+    const [isColumnPopoverOpen, setIsColumnPopoverOpen] = useState(false);
+    const [newColumnPoints, setNewColumnPoints] = useState(null);
 
     const [isPokemonModalOpen, setIsPokemonModalOpen] = useState(false);
     const [isEditingPokemon, setIsEditingPokemon] = useState(false);
@@ -31,10 +29,10 @@ export function CreateDraftBoard() {
     const [notes, setNotes] = useState('');
 
     const handleAddColumn = () => {
-        if (newColumnName.trim()) {
-        setColumns([...columns, { name: newColumnName, pokemon: [] }]);
-        setNewColumnName('');
-        setIsColumnModalOpen(false);
+        if (newColumnPoints != null) {
+            setColumns([...columns, { points: newColumnPoints, pokemon: [] }]);
+            setNewColumnPoints(null);
+            setIsColumnPopoverOpen(false);
         }
     };
 
@@ -50,6 +48,10 @@ export function CreateDraftBoard() {
         setEditingPokemonIndex(null);
         setIsEditingPokemon(false);
         clearPokemonInfo();
+    }
+
+    const handleRemoveColumn = (columnIndex) => {
+        setColumns(columns.filter((column, index) => index !== columnIndex));
     }
 
     const handleAddPokemon = () => {
@@ -201,13 +203,14 @@ export function CreateDraftBoard() {
     };
 
     return (
-        <Container>
+        <Container fluid>
         <Title align="center" mb="xl">Draft Board</Title>
-        <Group>
-            <Group>
+        <ScrollArea>
+        <Group align="flex-start" wrap="nowrap">
+            <Group align="flex-start" wrap="nowrap">
                 <Card key="banned-pokemon" p="lg" style={{ minWidth: '200px' }} c="red">
                     <Stack spacing="xs">
-                        <Title order={4}>Banned Pokémon</Title>
+                        <Title order={4}>Banned</Title>
                         {bannedPokemon.map((poke, index) => (
                             <Center key={index}>
                                 <PokemonCell pokemon={poke} handleRemovePokemon={() => handleRemovePokemon(index, -2)} />
@@ -222,7 +225,7 @@ export function CreateDraftBoard() {
                 </Card>
                 <Card key="tera-banned-pokemon" p="lg" style={{ minWidth: '200px' }} c="grape">
                     <Stack spacing="xs">
-                        <Title order={4}>Tera Banned Pokémon</Title>
+                        <Title order={4}>Tera Banned</Title>
                         {teraBannedPokemon.map((poke, index) => (
                             <Center key={index}>
                                 <PokemonCell pokemon={poke} handleRemovePokemon={() => handleRemovePokemon(index, -1)} />
@@ -237,11 +240,16 @@ export function CreateDraftBoard() {
                 </Card>
             </Group>
             <Divider orientation='vertical'/>
-            <Group spacing="lg" align="flex-start">
+            <Group align="flex-start" wrap="nowrap">
                 {columns.map((column, columnIndex) => (
                 <Card key={columnIndex} p="lg" style={{ minWidth: '200px' }}>
                     <Stack spacing="xs">
-                    <Title order={4}>{column.name}</Title>
+                    <Group justify="space-between">
+                        <Title order={4}>{column.points} Points</Title>
+                        <ActionIcon variant="transparent" onClick={() => handleRemoveColumn(columnIndex)}>
+                            <IconX size={16} />
+                        </ActionIcon>
+                    </Group>
                     {column.pokemon.map((poke, pokeIndex) => (
                         <Center key={pokeIndex}>
                             <PokemonCell pokemon={poke} handleEditPokemon={() => handleEditPokemon(poke, pokeIndex, columnIndex)} handleRemovePokemon={() => handleRemovePokemon(pokeIndex, columnIndex)} />
@@ -255,22 +263,30 @@ export function CreateDraftBoard() {
                     </Stack>
                 </Card>
                 ))}
-                <Button onClick={() => setIsColumnModalOpen(true)}>Add Column</Button>
+                <Popover position="top" opened={isColumnPopoverOpen} onChange={setIsColumnPopoverOpen}>
+                    <Popover.Target>
+                        <ActionIcon onClick={() => setIsColumnPopoverOpen((prev) => !prev)}>
+                            <IconPlus size={16} />
+                        </ActionIcon>
+                    </Popover.Target>
+                    <Popover.Dropdown>
+                        <FocusTrap>
+                        <NumberInput
+                            label="Points"
+                            value={newColumnPoints}
+                            placeholder="Point Cost"
+                            onChange={setNewColumnPoints}
+                            hideControls
+                            allowDecimal={false}
+                            allowNegative={false}
+                        />
+                        </FocusTrap>
+                        <Button onClick={handleAddColumn} mt="md">Add Column</Button>
+                    </Popover.Dropdown>
+                </Popover>
             </Group>
         </Group>
-
-        <Modal
-            opened={isColumnModalOpen}
-            onClose={() => setIsColumnModalOpen(false)}
-            title="Add New Column"
-        >
-            <TextInput
-            placeholder="New column name"
-            value={newColumnName}
-            onChange={(event) => setNewColumnName(event.currentTarget.value)}
-            />
-            <Button onClick={handleAddColumn} mt="md">Add Column</Button>
-        </Modal>
+        </ScrollArea>
 
         <Modal
             opened={isPokemonModalOpen}
@@ -282,6 +298,7 @@ export function CreateDraftBoard() {
             title="Add New Pokémon"
         >
             <Stack>
+            <FocusTrap>
             <Autocomplete
                 data={POKEMON_DATA.map((pokemon) => (pokemon.name))}
                 placeholder={'Start typing...'}
@@ -304,7 +321,9 @@ export function CreateDraftBoard() {
                 limit={10}
                 renderOption={renderAutocompleteOption}
                 dropdownOpened={pokemonDropdownOpened}
+                data-autofocus
             />
+            </FocusTrap>
 
             {pokemonToBeAdded &&
                 <PokemonInfo pokemon={POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded)}

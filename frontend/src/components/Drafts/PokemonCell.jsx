@@ -41,9 +41,9 @@ const PokemonCell = ({ pokemon, handleEditPokemon, handleRemovePokemon }) => {
             </Group>
 
             <Group gap={2} pos="absolute" top={0} left={5}>
-                <ActionIcon onClick={handleEditPokemon} variant="subtle" size={20} opacity={0.5}>
+                {handleEditPokemon && <ActionIcon onClick={handleEditPokemon} variant="subtle" size={20} opacity={0.5}>
                     <IconPencil />
-                </ActionIcon>
+                </ActionIcon>}
                 <ActionIcon onClick={handleRemovePokemon} variant="subtle" size={20} opacity={0.5}>
                     <IconX />
                 </ActionIcon>

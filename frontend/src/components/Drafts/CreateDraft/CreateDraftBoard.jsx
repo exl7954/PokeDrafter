@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, UnstyledButton, Center, ActionIcon } from '@mantine/core';
+import React, { useState, useEffect } from 'react';
+import { Container, Button, TextInput, Card, Title, Text, Group, Stack, Modal, Autocomplete, Image, Divider, Center, ActionIcon } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 import { useLoaderData } from 'react-router-dom';
 import PokemonInfo from '../PokemonInfo';
@@ -8,9 +8,10 @@ import PokemonCell from '../PokemonCell';
 export function CreateDraftBoard() {
     const POKEMON_DATA = useLoaderData();
 
+    const [bannedPokemon, setBannedPokemon] = useState([]);
+    const [teraBannedPokemon, setTeraBannedPokemon] = useState([]);
+
     const [columns, setColumns] = useState([
-        { name: 'Banned', pokemon: []},
-        { name: 'Tera Banned', pokemon: []},
         { name: '19 Points', pokemon: []},
     ]);
     const [newColumnName, setNewColumnName] = useState('');
@@ -43,66 +44,104 @@ export function CreateDraftBoard() {
         setNotes('');
     };
 
+    const clearPokemonStates = () => {
+        setPokemonValue('');
+        setPokemonToBeAdded('');
+        setEditingPokemonIndex(null);
+        setIsEditingPokemon(false);
+        clearPokemonInfo();
+    }
+
     const handleAddPokemon = () => {
         if (pokemonToBeAdded.trim() && selectedColumnIndex !== null) {
-            let updatedColumns;
-            if (isEditingPokemon) {
-                updatedColumns = columns.map((column, index) =>
-                    index === selectedColumnIndex
-                    ? { ...column, pokemon: column.pokemon.map((pokemon, pokeIndex) =>
-                        pokeIndex === editingPokemonIndex
-                        ? { ...pokemon,
-                            name: pokemonToBeAdded,
-                            sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
-                            bannedAbilities: bannedAbilities,
-                            bannedMoves: bannedMoves,
-                            notes: notes
-                        }
-                        : pokemon
-                    )}
-                    : column
-                );
-            } else {
-                updatedColumns = columns.map((column, index) =>
-                index === selectedColumnIndex
-                ? { ...column, pokemon: [...column.pokemon, {
+            if (selectedColumnIndex == -2) {
+                setBannedPokemon([...bannedPokemon, {
                     name: pokemonToBeAdded,
                     sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
-                    bannedAbilities: bannedAbilities,
-                    bannedMoves: bannedMoves,
-                    notes: notes
-                }] }
-                : column
-            );
+                    bannedAbilities: [],
+                    bannedMoves: [],
+                    notes: ''
+                }]);
+            } else if (selectedColumnIndex == -1) {
+                setTeraBannedPokemon([...teraBannedPokemon, {
+                    name: pokemonToBeAdded,
+                    sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
+                    bannedAbilities: [],
+                    bannedMoves: [],
+                    notes: ''
+                }]);
+            } else {
+                let updatedColumns;
+                if (isEditingPokemon) {
+                    updatedColumns = columns.map((column, index) =>
+                        index === selectedColumnIndex
+                        ? { ...column, pokemon: column.pokemon.map((pokemon, pokeIndex) =>
+                            pokeIndex === editingPokemonIndex
+                            ? { ...pokemon,
+                                name: pokemonToBeAdded,
+                                sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
+                                bannedAbilities: bannedAbilities,
+                                bannedMoves: bannedMoves,
+                                notes: notes
+                            }
+                            : pokemon
+                        )}
+                        : column
+                    );
+                } else {
+                    updatedColumns = columns.map((column, index) =>
+                    index === selectedColumnIndex
+                    ? { ...column, pokemon: [...column.pokemon, {
+                        name: pokemonToBeAdded,
+                        sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((pokemon) => pokemon.name === pokemonToBeAdded).url.split('/')[6]}.png`,
+                        bannedAbilities: bannedAbilities,
+                        bannedMoves: bannedMoves,
+                        notes: notes
+                    }] }
+                    : column
+                );
+                }
+                setColumns(updatedColumns);
             }
-            setColumns(updatedColumns);
-            setPokemonValue('');
-            setPokemonToBeAdded('');
-            setSelectedColumnIndex(null);
+            clearPokemonStates();
             setIsPokemonModalOpen(false);
-            clearPokemonInfo();
         }
     };
 
     const handleDirectAddPokemon = (pokemon) => {
         if (pokemon.trim() && selectedColumnIndex !== null) {
-            const updatedColumns = columns.map((column, index) =>
-                index === selectedColumnIndex
-                ? { ...column, pokemon: [...column.pokemon, {
+            if (selectedColumnIndex == -2) {
+                setBannedPokemon([...bannedPokemon, {
                     name: pokemon,
                     sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((p) => p.name === pokemon).url.split('/')[6]}.png`,
                     bannedAbilities: [],
                     bannedMoves: [],
                     notes: ''
-                }] }
-                : column
-            );
-            setColumns(updatedColumns);
-            setPokemonValue('');
-            setPokemonToBeAdded('');
-            setSelectedColumnIndex(null);
+                }]);
+            } else if (selectedColumnIndex == -1) {
+                setTeraBannedPokemon([...teraBannedPokemon, {
+                    name: pokemon,
+                    sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((p) => p.name === pokemon).url.split('/')[6]}.png`,
+                    bannedAbilities: [],
+                    bannedMoves: [],
+                    notes: ''
+                }]);
+            } else {
+                const updatedColumns = columns.map((column, index) =>
+                    index === selectedColumnIndex
+                    ? { ...column, pokemon: [...column.pokemon, {
+                        name: pokemon,
+                        sprite: `/src/assets/pokemon-sprites/sprites/pokemon/${POKEMON_DATA.find((p) => p.name === pokemon).url.split('/')[6]}.png`,
+                        bannedAbilities: [],
+                        bannedMoves: [],
+                        notes: ''
+                    }] }
+                    : column
+                );
+                setColumns(updatedColumns);
+            }
+            clearPokemonStates();
             setIsPokemonModalOpen(false);
-            clearPokemonInfo();
         }
     };
 
@@ -119,6 +158,14 @@ export function CreateDraftBoard() {
     };
 
     const handleRemovePokemon = (pokeIndex, columnIndex) => {
+        if (columnIndex == -2) {
+            setBannedPokemon(bannedPokemon.filter((pokemon, index) => index !== pokeIndex));
+            return;
+        } else if (columnIndex == -1) {
+            setTeraBannedPokemon(teraBannedPokemon.filter((pokemon, index) => index !== pokeIndex));
+            return;
+        }
+
         const updatedColumns = columns.map((column, index) =>
             index === columnIndex
             ? { ...column, pokemon: column.pokemon.filter((pokemon, index) => index !== pokeIndex) }
@@ -156,24 +203,60 @@ export function CreateDraftBoard() {
     return (
         <Container>
         <Title align="center" mb="xl">Draft Board</Title>
-        <Group spacing="lg" align="flex-start">
-            {columns.map((column, columnIndex) => (
-            <Card key={columnIndex} p="lg" style={{ minWidth: '200px' }}>
-                <Stack spacing="xs">
-                <Title order={4}>{column.name}</Title>
-                {column.pokemon.map((poke, pokeIndex) => (
-                    <Center key={pokeIndex}>
-                        <PokemonCell pokemon={poke} handleEditPokemon={() => handleEditPokemon(poke, pokeIndex, columnIndex)} handleRemovePokemon={() => handleRemovePokemon(pokeIndex, columnIndex)} />
-                    </Center>
+        <Group>
+            <Group>
+                <Card key="banned-pokemon" p="lg" style={{ minWidth: '200px' }} c="red">
+                    <Stack spacing="xs">
+                        <Title order={4}>Banned Pokémon</Title>
+                        {bannedPokemon.map((poke, index) => (
+                            <Center key={index}>
+                                <PokemonCell pokemon={poke} handleRemovePokemon={() => handleRemovePokemon(index, -2)} />
+                            </Center>
+                        ))}
+                        <Button onClick={() => {
+                            clearPokemonStates();
+                            setSelectedColumnIndex(-2);
+                            setIsPokemonModalOpen(true);
+                        }}>Add Pokémon</Button>
+                    </Stack>
+                </Card>
+                <Card key="tera-banned-pokemon" p="lg" style={{ minWidth: '200px' }} c="grape">
+                    <Stack spacing="xs">
+                        <Title order={4}>Tera Banned Pokémon</Title>
+                        {teraBannedPokemon.map((poke, index) => (
+                            <Center key={index}>
+                                <PokemonCell pokemon={poke} handleRemovePokemon={() => handleRemovePokemon(index, -1)} />
+                            </Center>
+                        ))}
+                        <Button onClick={() => {
+                            clearPokemonStates();
+                            setSelectedColumnIndex(-1);
+                            setIsPokemonModalOpen(true);
+                        }}>Add Pokémon</Button>
+                    </Stack>
+                </Card>
+            </Group>
+            <Divider orientation='vertical'/>
+            <Group spacing="lg" align="flex-start">
+                {columns.map((column, columnIndex) => (
+                <Card key={columnIndex} p="lg" style={{ minWidth: '200px' }}>
+                    <Stack spacing="xs">
+                    <Title order={4}>{column.name}</Title>
+                    {column.pokemon.map((poke, pokeIndex) => (
+                        <Center key={pokeIndex}>
+                            <PokemonCell pokemon={poke} handleEditPokemon={() => handleEditPokemon(poke, pokeIndex, columnIndex)} handleRemovePokemon={() => handleRemovePokemon(pokeIndex, columnIndex)} />
+                        </Center>
+                    ))}
+                    <Button onClick={() => {
+                        clearPokemonStates();
+                        setSelectedColumnIndex(columnIndex);
+                        setIsPokemonModalOpen(true);
+                    }}>Add Pokémon</Button>
+                    </Stack>
+                </Card>
                 ))}
-                <Button onClick={() => {
-                    setSelectedColumnIndex(columnIndex);
-                    setIsPokemonModalOpen(true);
-                }}>Add Pokémon</Button>
-                </Stack>
-            </Card>
-            ))}
-            <Button onClick={() => setIsColumnModalOpen(true)}>Add Column</Button>
+                <Button onClick={() => setIsColumnModalOpen(true)}>Add Column</Button>
+            </Group>
         </Group>
 
         <Modal
@@ -193,11 +276,7 @@ export function CreateDraftBoard() {
             opened={isPokemonModalOpen}
             onClose={() => {
                 setIsPokemonModalOpen(false);
-                setPokemonValue('');
-                setPokemonToBeAdded('');
-                setEditingPokemonIndex(null);
-                setIsEditingPokemon(false);
-                clearPokemonInfo();
+                clearPokemonStates();
             }}
             size="lg"
             title="Add New Pokémon"
